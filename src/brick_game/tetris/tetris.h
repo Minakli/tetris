@@ -1,6 +1,8 @@
 #ifndef TETRIS_H_
 #define TETRIS_H_
 
+#include <stdbool.h>
+
 typedef enum {
   Start,
   Pause,

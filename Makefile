@@ -30,7 +30,7 @@ clean:
 	rm -rf build
 
 install: all
-	sudo cp build/tetris /usr/local/bin/
+	cp build/tetris /usr/local/bin/
 
 uninstall: clean
-	sudo rm /usr/local/bin/tetris
+	rm /usr/local/bin/tetris

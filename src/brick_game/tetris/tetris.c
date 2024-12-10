@@ -41,6 +41,7 @@ int **create_next_tetratino() {
       }
     }
   }
+  return 0;
 }
 
 // typedef struct {

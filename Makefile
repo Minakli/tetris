@@ -1,26 +1,36 @@
 CC = gcc
-CFLAGS = -Wall -Wextra -Werror -std=c11
+CFLAGS = -std=c11 -Wall -Wextra
 
-SRC_UI = $(shell find ./src/gui -name "*.c")
-SRC_GAME = $(shell find ./src/brick_game -name "*.c")
-BUILD_DIR = build
-OBJ_GAME = $(patsubst %.c $(BUILD_DIR)/%.o $(SRC))
+SRC_UI = $(shell find src/gui/cli -name "*.c")
+SRC_TETRIS = $(shell find src/brick_game/tetris/ -name "*.c")
 
-play: 
-	/usr/local/bin/brick_game
+OBJ_UI = $(patsubst src/gui/cli/%.c, build/gui/%.o, $(SRC_UI))
+OBJ_GAME = $(patsubst src/brick_game/tetris/%.c, build/brick_game/tetris/%.o, $(SRC_TETRIS))
 
-install: brick_game
-	cp brick game /usr/local/bin/
+all: game
 
-# $(CC) $(CFLAGS) -c $(SRC)
-	$(CC) -c $(SRC)
-game: $(OBJ)
+game: tetris.a ui.o
+	$(CC) $(CFLAGS) build/brick_game/tetris/tetris.a build/gui/ui.o -o build/tetris
 
+tetris.a: $(OBJ_GAME)
+	ar rcs build/brick_game/tetris/tetris.a $(OBJ_GAME)
 
+ui.o: $(OBJ_UI)
+	$(CC) -r $(CFLAGS) $(OBJ_UI) -o build/gui/ui.o
 
+build/gui/%.o: src/gui/cli/%.c
+	mkdir -p build/gui/
+	$(CC) $(CFLAGS) -c $< -o $@
 
-# test: clean test
+build/brick_game/tetris/%.o: src/brick_game/tetris/%.c
+	mkdir -p build/brick_game/tetris/
+	$(CC) $(CFLAGS) -c $< -o $@
 
-unintall:
-	rm -f /usr/local/bin/brick_game
-	rm -f bin/*.*
+clean:
+	rm -rf build
+
+install: all
+	sudo cp build/tetris /usr/local/bin/
+
+uninstall: clean
+	sudo rm /usr/local/bin/tetris

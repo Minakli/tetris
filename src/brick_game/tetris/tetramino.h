@@ -1,10 +1,41 @@
-// #ifndef FIGURES_H_
-// #define FIGURES_H_
+#ifndef TETRAMINO_H_
+#define TETRAMINO_H_
 
-// #include "tetris.h"
+#include "tetris.h"
 
-// typedef struct {
-//   int data[4][4];
-// } tetramino;
+#define I_TETR                                               \
+  {                                                          \
+    {0, 0, 0, 0}, {1, 1, 1, 1}, {0, 0, 0, 0}, { 0, 0, 0, 0 } \
+  }
 
-// #endif
+#define O_TETR                                               \
+  {                                                          \
+    {0, 0, 0, 0}, {0, 1, 1, 0}, {0, 1, 1, 0}, { 0, 0, 0, 0 } \
+  }
+
+#define T_TETR                                               \
+  {                                                          \
+    {0, 0, 0, 0}, {0, 0, 1, 0}, {0, 1, 1, 1}, { 0, 0, 0, 0 } \
+  }
+
+#define L_TETR                                               \
+  {                                                          \
+    {0, 0, 0, 0}, {0, 0, 1, 0}, {1, 1, 1, 0}, { 0, 0, 0, 0 } \
+  }
+
+#define J_TETR                                               \
+  {                                                          \
+    {0, 0, 0, 0}, {0, 1, 0, 0}, {0, 1, 1, 1}, { 0, 0, 0, 0 } \
+  }
+
+#define S_TETR                                               \
+  {                                                          \
+    {0, 0, 0, 0}, {0, 1, 1, 0}, {1, 1, 0, 0}, { 0, 0, 0, 0 } \
+  }
+
+#define Z_TETR                                               \
+  {                                                          \
+    {0, 0, 0, 0}, {0, 1, 1, 0}, {0, 0, 1, 1}, { 0, 0, 0, 0 } \
+  }
+
+#endif

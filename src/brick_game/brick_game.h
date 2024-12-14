@@ -1,5 +1,5 @@
-#ifndef TETRIS_H_
-#define TETRIS_H_
+#ifndef BRICK_GAME_H_
+#define BRICK_GAME_H_
 
 #include <stdbool.h>
 

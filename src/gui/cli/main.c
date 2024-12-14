@@ -1,10 +1,4 @@
-#include <stdio.h>
-#include "../../brick_game/brick_game.h"
 #include "main.h"
-
-void print_game();
-void print_shot_field();
-
 
 int main(){
     // print_game();

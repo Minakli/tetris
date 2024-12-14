@@ -57,6 +57,10 @@
   "C_Cpp_Runner.useLinkTimeOptimization": false,
   "C_Cpp_Runner.msvcSecureNoWarnings": false,
   "files.associations": {
-    "tetramino.h": "c"
+    "tetramino.h": "c",
+    "tetris.h": "c",
+    "stdlib.h": "c",
+    "brick_game.h": "c",
+    "stdbool.h": "c"
   }
 }

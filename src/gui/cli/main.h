@@ -2,9 +2,12 @@
 #define MAIN_H_
 
 #include <stdio.h>
+#include <ncurses.h>
 #include "../../brick_game/brick_game.h"
 
+void print_menu();
 void print_game();
-void print_shot_field();
+void print_field();
+void print_next();
 
 #endif

@@ -1,216 +1,155 @@
-#include "tetris.h"
-
-// static GameInfo_t game_info = {0};
+#include "./tetris.h"
 
 GameInfo_t* getInfo() {
-  static GameInfo_t game_info = {0};
+  static GameInfo_t game_info = {NULL, NULL, 0,-1,1,1,0};
+  
+  if(!(game_info.field)) create_matrix(&(game_info.field), FIELD_HEIGHT, FIELD_WIDTH);
+  if(!(game_info.next)) create_matrix(&(game_info.next), TETRAMINO_SIZE, TETRAMINO_SIZE);
+  if(game_info.high_score < 0) {
+    game_info.high_score = 0;
+    FILE *file = fopen("./brick_game_hight_score.txt", "r");
+    if(file) {
+      fscanf(file, "%d", &(game_info.high_score));
+    }
+    fclose(file);
+  }
   return &game_info;
 }
 
-int* getState(void) {
+int* getState() {
   static int state = START;
   return &state;
 }
 
-int *getEnd() {
-  static int end = 0;
-  return &end;
+GameInfo_t updateCurrentState() {
+    switch (*getState())
+    {
+    case MOVING:
+        /* code */
+        break;
+    case SHIFTING:
+        /* code */
+        break;
+    case PAUSE:
+        /* code */
+        break;
+    case GAME_OVER:
+        /* code */
+        break;
+    // case /* constant-expression */:
+    //     /* code */
+    //     break;
+    // case /* constant-expression */:
+    //     /* code */
+    //     break;
+    
+    default:
+        break;
+    }
+
+    return *(getInfo());
 }
 
-// Создаем пустое поле
-// Выбираем рандомно текущую БАЗОВУЮ картинку (если нет next)
-// Выбираем рандомно next
-// Двигаем текущую картинку по полю, отправляя их сумму в главную структуру
-// При столкновении или заполнении меняем БАЗОВУЮ картинку
-
-
-Field_data* getFieldData() {
-  static Field_data field_data = {0};
-  field_data.field_simple = create_matrix(FIELD_WIDTH, FIELD_HEIGHT);
-  field_data.tetramino_current = create_matrix(TETRAMINO_SIZE, TETRAMINO_SIZE);
-  return &field_data;
-}
-
-// Сделать структуру: Поле без фигуры, фигура, ее координаты.
-
-// Задача создавать картинку поля
-void setField() {
-  int** current_field = {0};
-  int** current_tetramino ={0};
-  int** field = getInfo()->field;
-
-
-}
-
-int** create_random_tetramino() {
-
-}
-
-// Меняет GameInfo_t при нажатии клавиши
 void userInput(UserAction_t action, bool hold) {
-  GameInfo_t *game_info = getInfo();
-  int *state = getState();
-
-//   typedef enum {
-//   Start,
-//   Pause,
-//   Terminate,
-//   Left,
-//   Right,
-//   Up,
-//   Down,
-//   Action
-// } UserAction_t;
-
-       switch (action)
+           switch (action)
     {
         case Start:
-            press_start(hold, state);
+            if(*getState() == START) *getState() = MOVING;
             break;
         case Pause:
-            press_pause(hold, state, game_info);
+            if(*getState() == MOVING) *getState() = PAUSE;
+            if(*getState() == PAUSE) *getState() = MOVING;
             break;
         case Terminate:
-            press_terminate(state, game_info);
+            *getState() = GAME_OVER;
             break;
         case Left:
-            move_left(hold, state, game_info);
+            move_left(hold, *getState(), *getInfo());
             break;
         case Right:
-            move_right(hold, state, game_info);
+            move_right(hold, *getState(), *getInfo());
             break;
         case Down:
-            move_down(hold, state, game_info);
+            move_down(hold, *getState(), *getInfo());
             break;
         case Action:
-            rotate(hold, state, game_info);
+            rotate(hold, *getState(), *getInfo());
             break;
         default:
             break;
     }
-
-}
-// #define START 0
-// #define SPAWN 1
-// #define MOVING 2
-// #define SHIFTING 3
-// #define ATTACHING 4
-// #define PAUSE 5
-
-#define GAME_OVER 6
-void press_start(bool hold, int *state) {
-  if(*state == START) *state = SPAWN;
 }
 
-void press_pause(bool hold, int *state, GameInfo_t *game_info) {
-  switch (*state)
+void create_next_tetramino(int ***tetramino) {
+  srand(time(NULL));
+  static int prev_sign = -1;
+  int sign = 0;
+     do {
+        sign = rand() % 7;
+    } while (sign == prev_sign);
+    prev_sign = sign;
+  switch ("IOTLJSZ"[sign])
   {
-  case PAUSE:
-    *state = game_info->pause;
-    game_info->pause = 0;
+  case 'I':
+    for(int i = 0; i < 4; i++) *tetramino[1][i] = 1;
     break;
-  case SPAWN:
-  case MOVING:
-  case SHIFTING:
-  case ATTACHING:
-    game_info->pause = *state;
-    *state = PAUSE;
-    print_pause(game_info);
+  case 'O':
+    *tetramino[1][2] = 1;
+    *tetramino[1][3] = 1;
+    *tetramino[2][2] = 1;
+    *tetramino[2][3] = 1;
+    break;
+  case 'T':
+    *tetramino[1][2] = 1;
+    for(int i = 1; i < 4; i++) *tetramino[2][i] = 1;
+    break;
+  case 'L':
+    *tetramino[1][3] = 1;
+    for(int i = 1; i < 4; i++) *tetramino[2][i] = 1;
+    break;
+  case 'J':
+    *tetramino[1][1] = 1;
+    for(int i = 1; i < 4; i++) *tetramino[2][i] = 1;
+    break;
+  case 'S':
+    *tetramino[1][2] = 1;
+    *tetramino[1][3] = 1;
+    *tetramino[2][1] = 1;
+    *tetramino[2][2] = 1;
+    break;
+  case 'Z':
+    *tetramino[1][1] = 1;
+    *tetramino[1][2] = 1;
+    *tetramino[2][2] = 1;
+    *tetramino[2][3] = 1;
     break;
   default:
     break;
   }
 }
 
-void print_pause(GameInfo_t* game_info) {
-// Указать координаты и текст
-}
-
-void press_terminate(int *state, GameInfo_t* game_info) {
-  free_matrix(game_info->field, FIELD_HEIGHT);
-  free_matrix(game_info->next, TETRAMINO_SIZE);
-  int *end_pointer = getEnd();
-  *end_pointer = 1;
-}
-
-void free_matrix(int **matrix, int rows) {
-  for(int i = 0; i < rows; i++) {
-    free(matrix[i]);
-  }
-  free(matrix);
-}
-
-
-
-int **create_matrix(int str, int col) {
-  int **field = calloc(str, sizeof(int *));
-  if (field) {
+void create_matrix(int ***matrix, int str, int col) {
+  *matrix = calloc(str, sizeof(int *));
+  if (*matrix) {
     int err = 0;
     for (int i = 0; i < str && !err; i++) {
-      field[i] = calloc(col, sizeof(int));
-      if (!field[i]) {
+      (*matrix)[i] = calloc(col, sizeof(int));
+      if (!(*matrix)[i]) {
         err = 1;
         i--;
         while (i >= 0) {
-          free(field[i]);
-          field[i] = NULL;
+          free((*matrix)[i]);
+          (*matrix)[i] = NULL;
           i--;
         }
-        free(field);
-        field = NULL;
+        free((*matrix));
+        *matrix = NULL;
       }
     }
   }
-  return field;
 }
 
-int set_score() { return 0; }
-int set_high_score() { return 0; }
-int set_level() { return 0; }
-int set_speed() { return 0; }
-int set_pause() { return 0; }
-
-on_start_state(sig, state) {
-  {
-    switch (sig)
-    {
-        case ENTER_BTN:
-            *state = SPAWN;
-            break;
-        case ESCAPE_BTN:
-            *state = EXIT_STATE;
-            break;
-        default:
-            *state = START;
-            break;
-    }
-}
-}
-
-GameInfo_t updateCurrentState() {
-  // return game_info;
-  return *(getInfo());
-}
-
-
-
-
-void setCurrentState() {
-// Зависит от:
-// - текущего состояния
-// - действия игрока
-// - событий в игре
-
-}
-
-// GameInfo_t qweqwe(GameInfo_t A) {
-//   A.field = create_matrix(20, 10);
-//   A.next = create_matrix(4, 4);
-//   A.score = set_score();
-//   A.high_score = set_high_score();
-//   A.level = set_level();
-//   A.speed = set_speed();
-//   A.pause = set_pause();
-
-//   return A;
-// }
+void move_left(bool hold, int state, GameInfo_t info) {}
+void move_right(bool hold, int state, GameInfo_t info) {}
+void move_down(bool hold, int state, GameInfo_t info) {}
+void rotate(bool hold, int state, GameInfo_t info) {}

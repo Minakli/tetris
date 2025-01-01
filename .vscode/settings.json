@@ -61,6 +61,8 @@
     "tetris.h": "c",
     "stdlib.h": "c",
     "brick_game.h": "c",
-    "stdbool.h": "c"
+    "stdbool.h": "c",
+    "unistd.h": "c",
+    "main.h": "c"
   }
 }

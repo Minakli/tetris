@@ -1,5 +1,6 @@
 CC = gcc
-CFLAGS = -std=c11 -Wall -Wextra
+# CFLAGS = -std=c11 -Wall -Wextra
+CFLAGS = -std=c11
 
 SRC_UI = $(shell find src/gui/cli -name "*.c")
 SRC_TETRIS = $(shell find src/brick_game/tetris/ -name "*.c")
@@ -10,7 +11,7 @@ OBJ_GAME = $(patsubst src/brick_game/tetris/%.c, build/brick_game/tetris/%.o, $(
 all: game
 
 game: tetris.a ui.o
-	$(CC) $(CFLAGS) build/brick_game/tetris/tetris.a build/gui/ui.o -o build/tetris
+	$(CC) $(CFLAGS) build/gui/ui.o build/brick_game/tetris/tetris.a -o build/tetris -lncurses
 
 tetris.a: $(OBJ_GAME)
 	ar rcs build/brick_game/tetris/tetris.a $(OBJ_GAME)

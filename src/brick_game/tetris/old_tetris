@@ -1,85 +1,5 @@
 // #include "tetris.h"
 
-// // static GameInfo_t game_info = {0};
-// int game_loop() {
-//   int err = 0;
-//   int period = 0;
-//   while(*(getState()) != GAME_OVER && !err) {
-//     usleep(100000); // Тупит 0.1с
-//     period = (period < 11) ? period + updateCurrentState().speed: 0;
-//     switch (*getState())
-//     {
-//     case SPAWN:
-// //     typedef struct
-// // {
-// //     int **field_simple;
-// //     int **tetramino_current;
-// //     int x_coord;
-// //     int y_coord;
-// // } Field_data;
-      
-//         // Записать в текущую фигуру из next
-//   // spawn_tetramino(); спавнит и проверяет на поражение.
-//         create_next_tetramino(updateCurrentState().next);
-//       *getState() = MOVING;
-//       break;
-//     case MOVING:
-//     period = 0;
-//       if(period == 10) {
-//         *getState() = SHIFTING;
-        
-//       }
-//       break;
-//     case SHIFTING:
-//         if (check_attaching()) {
-//           fall_tetramino();
-//           *getState() = MOVING;
-
-//         } else {
-//           *getState() = ATTACHING;
-//         }
-//       break;
-//     case ATTACHING:
-//       attach();
-//       delete_full_lines(); // Добавляет счет, поднимает уровень, 
-//       *getState() = SPAWN;
-//       break;
-//     case PAUSE:
-//       (getInfo())->pause = 1;
-//       break;
-    
-//     default:
-//       err = 1;
-//       break;
-//     }
-//   }
-//   print_game_over();
-//   // Free()
-//   // Set_record()
-//   return err;
-// }
-
-// GameInfo_t* getInfo() {
-//   static GameInfo_t game_info = {{NULL, NULL, 0,-1,1,1,0}};
-  
-//   if(!(game_info.field)) create_matrix(&(game_info.field), FIELD_HEIGHT, FIELD_WIDTH);
-//   if(!(game_info.next)) create_matrix(&(game_info.next), TETRAMINO_SIZE, TETRAMINO_SIZE);
-//   if(game_info.high_score < 0) {
-//     game_info.high_score = 0;
-//     FILE *file = fopen("./brick_game_hight_score.txt", "r");
-//     if(file) {
-//       fscanf(file, "%d", &(game_info.high_score));
-//     }
-//     fclose(file);
-//   }
-//   return &game_info;
-// }
-
-// int* getState() {
-//   static int state = START;
-//   return &state;
-// }
-
 // int *getEnd() {
 //   static int end = 0;
 //   return &end;
@@ -226,38 +146,6 @@
 //   free_matrix(game_info->next, TETRAMINO_SIZE);
 //   int *end_pointer = getEnd();
 //   *end_pointer = 1;
-// }
-
-// void free_matrix(int ***matrix, int rows) {
-//   if(*matrix) {
-//   for(int i = 0; i < rows; i++) {
-//     free((*matrix)[i]);
-//     (*matrix)[i] = NULL;
-//   }
-//   free(*matrix);
-//   *matrix = NULL;
-//   }
-// }
-
-// void create_matrix(int ***matrix, int str, int col) {
-//   *matrix = calloc(str, sizeof(int *));
-//   if (*matrix) {
-//     int err = 0;
-//     for (int i = 0; i < str && !err; i++) {
-//       (*matrix)[i] = calloc(col, sizeof(int));
-//       if (!(*matrix)[i]) {
-//         err = 1;
-//         i--;
-//         while (i >= 0) {
-//           free((*matrix)[i]);
-//           (*matrix)[i] = NULL;
-//           i--;
-//         }
-//         free((*matrix));
-//         *matrix = NULL;
-//       }
-//     }
-//   }
 // }
 
 // int set_score() { return 0; }

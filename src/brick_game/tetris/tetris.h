@@ -2,6 +2,8 @@
 #include <stdio.h>
 #include <time.h>
 #include <unistd.h> 
+#include <sys/time.h>
+
 #include "../brick_game.h"
 
 #ifndef TETRIS_H_
@@ -28,17 +30,22 @@ typedef struct
 } Field_data;
 
 GameInfo_t* getInfo();
+Field_data *getData();
+void set_coords();
+void spawn_next();
 int* getState();
-void create_next_tetramino(int ***tetramino);
+void create_next(int ***tetramino);
 void create_matrix(int ***matrix, int str, int col);
+void clear_matrix(int ***matrix, int row, int col);
+int sum_matrix(int ***result_field);
 int set_score();
 int set_high_score();
 int set_level();
 int set_speed();
 int set_pause();
-void move_left(bool hold, int state, GameInfo_t info);
-void move_right(bool hold, int state, GameInfo_t info);
-void move_down(bool hold, int state, GameInfo_t info);
+void move_left();
+void move_right();
+void move_down();
 void rotate(bool hold, int state, GameInfo_t info);
 
 

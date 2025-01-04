@@ -15,7 +15,7 @@ GameInfo_t *getInfo() {
       fclose(file);
     }
   }
-  // set_score();
+  set_score();
   // set_high_score();
   // set_level();
   // set_speed();
@@ -42,6 +42,7 @@ GameInfo_t updateCurrentState() {
   getInfo();
   getData();
   getState();
+  getInfo()->high_score++;
   static clock_t current = -1;
   if (current == -1) current = clock();
 
@@ -94,13 +95,23 @@ void userInput(UserAction_t action, bool hold) {
       *getState() = GAME_OVER;
       break;
     case Left:
-      if(*getState() == MOVING) move_left();
+      // if(*getState() == MOVING)
+      getInfo()->high_score = action;
+      move_left();
       break;
     case Right:
-      if(*getState() == MOVING) move_right();
+      getInfo()->high_score = action;
+
+      if (*getState() == MOVING) move_right();
       break;
     case Down:
-      if(*getState() == MOVING) move_down();
+      getInfo()->high_score = action;
+
+      // if(*getState() == MOVING)
+      move_down();
+      break;
+    case Up:
+      move_up();
       break;
     case Action:
       rotate(hold, *getState(), *getInfo());
@@ -227,51 +238,91 @@ void clear_matrix(int ***matrix, int row, int col) {
   }
 }
 
-int set_score() {}
+int set_score() {
+  // if(getData()->x_coord) getInfo()->score = getData()->x_coord;
+}
 int set_high_score() {}
 int set_level() { getInfo()->level = *getState(); }
 void check_attaching() {}
 int set_speed() {}
 int set_pause() {}
+
 int check_collision_down() {
   int collision = 0;
   int y_coord = getData()->y_coord;
   int x_coord = getData()->x_coord;
-  for (int t = x_coord; t < TETRAMINO_SIZE; t++) {
-    if (FIELD_HEIGHT - y_coord >= 0 && FIELD_HEIGHT - y_coord < 5) {
-      if (getData()->tetramino_current[FIELD_HEIGHT - y_coord - 1][t] == 1)
-        collision = 1;
-    }
+  getInfo()->score = getData()->x_coord;
+  for (int t = 0; t < TETRAMINO_SIZE && !collision; t++) {
+    if (FIELD_HEIGHT - y_coord - 1 >= 0 && FIELD_HEIGHT - y_coord - 1 < 5 &&
+        getData()->tetramino_current[FIELD_HEIGHT - y_coord - 1][t] == 1)
+      collision = 1;
   }
   y_coord++;
+  return collision || check_collision_body(y_coord, x_coord);
+}
+
+int check_collision_right() {
+  int collision = 0;
+  int y_coord = getData()->y_coord;
+  int x_coord = getData()->x_coord;
+  for (int t = 0; t < TETRAMINO_SIZE && !collision; t++) {
+    if (FIELD_WIDTH - x_coord - 1 >= 0 && FIELD_WIDTH - x_coord - 1 < 5 &&
+        getData()->tetramino_current[t][FIELD_WIDTH - x_coord - 1] == 1)
+      collision = 1;
+  }
+  x_coord++;
+  return collision || check_collision_body(y_coord, x_coord);
+}
+
+int check_collision_left() {
+  int collision = 0;
+  int y_coord = getData()->y_coord;
+  int x_coord = getData()->x_coord;
+  for (int t = 0; t < TETRAMINO_SIZE && !collision; t++) {
+    if (x_coord >= -4 && x_coord < 1 &&
+        getData()->tetramino_current[t][0 - x_coord] == 1)
+      collision = 1;
+  }
+  x_coord--;
+  return collision || check_collision_body(y_coord, x_coord);
+}
+
+
+int check_collision_body(int y_coord, int x_coord) {
+  int collision = 0;
   for (int i = y_coord; i < y_coord + TETRAMINO_SIZE && !collision; i++) {
     for (int j = x_coord; j < x_coord + TETRAMINO_SIZE && !collision; j++) {
-      if (i >= 0 && j >= 0 && i < FIELD_HEIGHT && j < FIELD_WIDTH) {
-        if (getData()->tetramino_current[i - y_coord][j - x_coord] +
-                getData()->field_simple[i][j] >
-            1) {
-          collision = 1;
-        }
-      }
+      if (i >= 0 && j >= 0 && i < FIELD_HEIGHT && j < FIELD_WIDTH &&
+          getData()->tetramino_current[i - y_coord][j - x_coord] +
+                  getData()->field_simple[i][j] >
+              1)
+        collision = 1;
     }
   }
   return collision;
 }
-void move_left() {
+
+void move_left() {{
+  if(!check_collision_left())
   getData()->x_coord--;
-  sum_matrix(&(getInfo()->field));
+  sum_matrix(&(getInfo()->field));}
 }
 void move_right() {
-  getData()->x_coord++;
-  sum_matrix(&(getInfo()->field));
+  if(!check_collision_right()) 
+  {getData()->x_coord++;
+  sum_matrix(&(getInfo()->field));}
 }
 void move_down() {
-  if(!check_collision_down()) {
+  if (!check_collision_down()) {
     getData()->y_coord++;
     sum_matrix(&(getInfo()->field));
     *getState() = MOVING;
   } else {
     *getState() = ATTACHING;
   }
+}
+void move_up() {
+  getData()->y_coord--;
+  sum_matrix(&(getInfo()->field));
 }
 void rotate(bool hold, int state, GameInfo_t info) {}

@@ -37,6 +37,9 @@ int* getState();
 void create_next(int ***tetramino);
 void create_matrix(int ***matrix, int str, int col);
 void clear_matrix(int ***matrix, int row, int col);
+int check_collision_down();
+int check_collision_right();
+int check_collision_body(int y_coord, int x_coord);
 int sum_matrix(int ***result_field);
 int set_score();
 int set_high_score();
@@ -46,6 +49,7 @@ int set_pause();
 void move_left();
 void move_right();
 void move_down();
+void move_up();
 void rotate(bool hold, int state, GameInfo_t info);
 
 

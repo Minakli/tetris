@@ -6,6 +6,7 @@ int main(){
     noecho();
     curs_set(0);
     timeout(0);
+    keypad(stdscr, TRUE);
     start_color();
     init_pair((short)1, COLOR_BLACK, COLOR_YELLOW);
     init_pair((short)2, COLOR_BLACK, COLOR_WHITE);
@@ -19,6 +20,8 @@ int main(){
                 userInput(Start, false);
                 break;
             case KEY_LEFT:
+            case 'a':
+            case 'A':
                 userInput(Left, false);
                 break;
             case KEY_RIGHT:

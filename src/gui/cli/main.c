@@ -10,7 +10,7 @@ int main(){
     start_color();
     init_pair((short)1, COLOR_BLACK, COLOR_YELLOW);
     init_pair((short)2, COLOR_BLACK, COLOR_WHITE);
-    // print_menu();
+    
 
     int end = 1;
     while(end) {
@@ -46,8 +46,11 @@ int main(){
             default:
                 break;
         }
-    print_game(updateCurrentState());
+    // clear();  
+    // usleep(1000);
+    napms(10);
     refresh();
+    print_game(updateCurrentState());
     }
     endwin();
     // free();
@@ -78,7 +81,7 @@ void print_field(int **field ){
     for(int i = 0; i < 20; i++){
         move(i + 1, 1);
         for(int j = 0; j < 10; j++){
-            if(field[i][j] == 1) {
+            if(field[i][j] > 0) {
                 attron(COLOR_PAIR(1));
                 printw("  ");
                 attroff(COLOR_PAIR(1));

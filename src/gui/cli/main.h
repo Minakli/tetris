@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 #include <ncurses.h>
+#include <unistd.h>
 #include "../../brick_game/brick_game.h"
 
 void print_menu();

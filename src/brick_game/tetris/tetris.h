@@ -27,6 +27,8 @@ typedef struct
     int **tetramino_current;
     int x_coord;
     int y_coord;
+    int next_type;
+    int current_type;
 } Field_data;
 
 GameInfo_t* getInfo();
@@ -35,7 +37,7 @@ void set_coords();
 void spawn_next();
 int* getState();
 void create_next(int ***tetramino);
-void create_matrix(int ***matrix, int str, int col);
+int create_matrix(int ***matrix, int str, int col);
 void clear_matrix(int ***matrix, int row, int col);
 int check_collision_down();
 int check_collision_right();
@@ -50,8 +52,10 @@ void move_left();
 void move_right();
 void move_down();
 void move_up();
-void rotate(bool hold, int state, GameInfo_t info);
-
-
+void rotate();
+void timer();
+void turn_tetramino(char direction);
+int check_fill();
+void delete_full_line(int y_index);
 
 #endif

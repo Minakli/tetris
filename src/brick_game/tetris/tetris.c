@@ -19,6 +19,7 @@ GameInfo_t *getInfo() {
   // set_high_score();
   // set_level();
   // set_speed();
+  game_info.speed = 0;
   // set_pause();
   game_info.level = *getState();
   return &game_info;
@@ -43,17 +44,9 @@ GameInfo_t updateCurrentState() {
   getData();
   getState();
   getInfo()->high_score++;
-  static clock_t current = -1;
-  if (current == -1) current = clock();
-
   switch (*getState()) {
     case MOVING:
-      clock_t next = clock();
-      if ((((double)(next - current)) / CLOCKS_PER_SEC) >
-          0.75 - 0.05 * getInfo()->speed) {
-        current = next;
-        *getState() = SHIFTING;
-      }
+      timer();
       break;
     case SHIFTING:
       move_down();
@@ -62,11 +55,14 @@ GameInfo_t updateCurrentState() {
       /* code */
       break;
     case SPAWN:
+      // check_fill();
       spawn_next();
       *getState() = MOVING;
       break;
     case ATTACHING:
       sum_matrix(&(getData()->field_simple));
+      check_fill();
+      // sum_matrix(&(getInfo()->field_simple));
       *getState() = SPAWN;
       break;
     case GAME_OVER:
@@ -106,25 +102,24 @@ void userInput(UserAction_t action, bool hold) {
       break;
     case Down:
       getInfo()->high_score = action;
-
-      // if(*getState() == MOVING)
       move_down();
       break;
     case Up:
       move_up();
       break;
     case Action:
-      rotate(hold, *getState(), *getInfo());
+      turn_tetramino('L');
+      // rotate();
       break;
     default:
       break;
   }
 }
 
-void create_matrix(int ***matrix, int str, int col) {
+int create_matrix(int ***matrix, int str, int col) {
+  int err = 0;
   *matrix = calloc(str, sizeof(int *));
   if (*matrix) {
-    int err = 0;
     for (int i = 0; i < str && !err; i++) {
       (*matrix)[i] = calloc(col, sizeof(int));
       if (!(*matrix)[i]) {
@@ -139,7 +134,10 @@ void create_matrix(int ***matrix, int str, int col) {
         *matrix = NULL;
       }
     }
+  } else {
+    err = 1;
   }
+  return err;
 }
 
 void remove_matrix(int ***matrix, int str) {
@@ -163,13 +161,34 @@ void spawn_next() {
   }
   getData()->x_coord = 3;
   getData()->y_coord = -3;
+  getData()->current_type = getData()->next_type;
   create_next(&(getInfo()->next));
 }
+
+// int sum_matrix(int ***result_field) {
+//   int y_coord = getData()->y_coord;
+//   int x_coord = getData()->x_coord;
+//   for (int i = 0; i < FIELD_HEIGHT; i++) {
+//     for (int j = 0; j < FIELD_WIDTH; j++) {
+//       if () {
+//         (*result_field)[i][j] =
+//             getData()->tetramino_current[i - y_coord][j - x_coord] +
+//             getData()->field_simple[i][j];
+//       }
+//     }
+//   }
+//   return 0;
+// }
 
 int sum_matrix(int ***result_field) {
   int result = 0;
   int y_coord = getData()->y_coord;
   int x_coord = getData()->x_coord;
+  for (int i = 0; i < FIELD_HEIGHT; i++) {
+    for (int j = 0; j < FIELD_WIDTH; j++) {
+      getInfo()->field[i][j] = getData()->field_simple[i][j];
+    }}
+
   for (int i = y_coord; i < y_coord + TETRAMINO_SIZE && !result; i++) {
     for (int j = x_coord; j < x_coord + TETRAMINO_SIZE && !result; j++) {
       if (i >= 0 && j >= 0 && i < FIELD_HEIGHT && j < FIELD_WIDTH) {
@@ -191,6 +210,7 @@ void create_next(int ***tetramino) {
     sign = rand() % 7;
   } while (sign == prev_sign);
   prev_sign = sign;
+  getData()->next_type = "IOTLJSZ"[sign];
   switch ("IOTLJSZ"[sign]) {
     case 'I':
       for (int i = 0; i < 4; i++) (*tetramino)[2][i] = 1;
@@ -287,7 +307,6 @@ int check_collision_left() {
   return collision || check_collision_body(y_coord, x_coord);
 }
 
-
 int check_collision_body(int y_coord, int x_coord) {
   int collision = 0;
   for (int i = y_coord; i < y_coord + TETRAMINO_SIZE && !collision; i++) {
@@ -302,15 +321,17 @@ int check_collision_body(int y_coord, int x_coord) {
   return collision;
 }
 
-void move_left() {{
-  if(!check_collision_left())
-  getData()->x_coord--;
-  sum_matrix(&(getInfo()->field));}
+void move_left() {
+  {
+    if (!check_collision_left()) getData()->x_coord--;
+    sum_matrix(&(getInfo()->field));
+  }
 }
 void move_right() {
-  if(!check_collision_right()) 
-  {getData()->x_coord++;
-  sum_matrix(&(getInfo()->field));}
+  if (!check_collision_right()) {
+    getData()->x_coord++;
+    sum_matrix(&(getInfo()->field));
+  }
 }
 void move_down() {
   if (!check_collision_down()) {
@@ -325,4 +346,89 @@ void move_up() {
   getData()->y_coord--;
   sum_matrix(&(getInfo()->field));
 }
-void rotate(bool hold, int state, GameInfo_t info) {}
+void rotate() {
+  // IOTLJSZ
+  // if (check_rotate()) {
+  if (1) {
+    if (!check_collision_left()) {
+      move_left();
+    } else if (!check_collision_right()) {
+      move_right();
+    }
+  }
+
+  if (getData()->current_type == 'T' || getData()->current_type == 'L' ||
+      getData()->current_type == 'J') {
+    // if(getData()->current_type)
+    turn_tetramino('L');
+  } else if (getData()->current_type == 'I' || getData()->current_type == 'S' ||
+             getData()->current_type == 'Z') {
+    if (getData()->tetramino_current[0][2] == 1 ||
+        getData()->tetramino_current[1][1] == 1 ||
+        getData()->tetramino_current[1][3] == 1) {
+    }
+  }
+}
+
+void turn_tetramino(char direction) {
+  int tmp_matrix[TETRAMINO_SIZE][TETRAMINO_SIZE];
+  for (int i = 0; i < TETRAMINO_SIZE; i++) {
+    for (int j = 0; j < TETRAMINO_SIZE; j++) {
+      tmp_matrix[i][j] = getData()->tetramino_current[i][j];
+    }
+  }
+  for (int i = 0; i < TETRAMINO_SIZE; i++) {
+    for (int j = 0; j < TETRAMINO_SIZE; j++) {
+      if (direction == 'L') {
+        getData()->tetramino_current[i][j] =
+            tmp_matrix[TETRAMINO_SIZE - 1 - j][i];
+      } else if (direction == 'R') {
+        getData()->tetramino_current[i][j] =
+            tmp_matrix[j][TETRAMINO_SIZE - 1 - i];
+      }
+    }
+  }
+  sum_matrix(&(getInfo()->field));
+}
+
+int check_rotate() {}
+
+void timer() {
+  static struct timeval start = {0};
+  if (start.tv_sec == 0) gettimeofday(&start, NULL);
+  struct timeval end = {0};
+  gettimeofday(&end, NULL);
+  if ((end.tv_sec * 100 + end.tv_usec / 10000) -
+          (start.tv_sec * 100 + start.tv_usec / 10000) >
+      75 - 5 * getInfo()->speed) {
+    *getState() = SHIFTING;
+    start = end;
+  }
+}
+
+int check_fill() {
+  int full_lines_count = 0;
+  for (int i = 0; i < FIELD_HEIGHT; i++) {
+    int is_full = 1;
+    for (int j = 0; j < FIELD_WIDTH && is_full; j++) {
+      if (getData()->field_simple[i][j] == 0) is_full = 0;
+    }
+    if (is_full) {
+      delete_full_line(i);
+      full_lines_count++;
+    }
+  }
+  sum_matrix(&(getInfo()->field));
+  return full_lines_count;
+}
+
+void delete_full_line(int y_index) {
+  for (int i = y_index; i > 0; i--) {
+    for (int j = 0; j < FIELD_WIDTH; j++) {
+      getData()->field_simple[i][j] = getData()->field_simple[i - 1][j];
+    }
+  }
+  for (int j = 0; j < FIELD_WIDTH; j++) {
+    getData()->field_simple[0][j] = 0;
+  }
+}

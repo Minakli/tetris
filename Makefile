@@ -1,6 +1,6 @@
 CC = gcc
 # CFLAGS = -std=c11 -Wall -Wextra
-CFLAGS =
+CFLAGS = -g
 
 SRC_UI = $(shell find src/gui/cli -name "*.c")
 SRC_TETRIS = $(shell find src/brick_game/tetris/ -name "*.c")

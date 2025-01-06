@@ -48,7 +48,7 @@ int main(){
         }
     // clear();  
     // usleep(1000);
-    napms(10);
+    napms(5);
     refresh();
     print_game(updateCurrentState());
     }

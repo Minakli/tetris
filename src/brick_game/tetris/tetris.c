@@ -105,10 +105,11 @@ void userInput(UserAction_t action, bool hold) {
       move_down();
       break;
     case Up:
-      move_up();
+      getData()->y_coord--;
+      sum_matrix(&(getInfo()->field));
       break;
     case Action:
-      turn_tetramino('L');
+      rotate();
       // rotate();
       break;
     default:
@@ -165,21 +166,6 @@ void spawn_next() {
   create_next(&(getInfo()->next));
 }
 
-// int sum_matrix(int ***result_field) {
-//   int y_coord = getData()->y_coord;
-//   int x_coord = getData()->x_coord;
-//   for (int i = 0; i < FIELD_HEIGHT; i++) {
-//     for (int j = 0; j < FIELD_WIDTH; j++) {
-//       if () {
-//         (*result_field)[i][j] =
-//             getData()->tetramino_current[i - y_coord][j - x_coord] +
-//             getData()->field_simple[i][j];
-//       }
-//     }
-//   }
-//   return 0;
-// }
-
 int sum_matrix(int ***result_field) {
   int result = 0;
   int y_coord = getData()->y_coord;
@@ -187,13 +173,14 @@ int sum_matrix(int ***result_field) {
   for (int i = 0; i < FIELD_HEIGHT; i++) {
     for (int j = 0; j < FIELD_WIDTH; j++) {
       getInfo()->field[i][j] = getData()->field_simple[i][j];
-    }}
+    }
+  }
 
   for (int i = y_coord; i < y_coord + TETRAMINO_SIZE && !result; i++) {
     for (int j = x_coord; j < x_coord + TETRAMINO_SIZE && !result; j++) {
       if (i >= 0 && j >= 0 && i < FIELD_HEIGHT && j < FIELD_WIDTH) {
         (*result_field)[i][j] =
-            getData()->tetramino_current[i - y_coord][j - x_coord] +
+            getData()->tetramino_current[i - y_coord][j - x_coord] ||
             getData()->field_simple[i][j];
       }
     }
@@ -267,74 +254,23 @@ void check_attaching() {}
 int set_speed() {}
 int set_pause() {}
 
-int check_collision_down() {
-  int collision = 0;
-  int y_coord = getData()->y_coord;
-  int x_coord = getData()->x_coord;
-  getInfo()->score = getData()->x_coord;
-  for (int t = 0; t < TETRAMINO_SIZE && !collision; t++) {
-    if (FIELD_HEIGHT - y_coord - 1 >= 0 && FIELD_HEIGHT - y_coord - 1 < 5 &&
-        getData()->tetramino_current[FIELD_HEIGHT - y_coord - 1][t] == 1)
-      collision = 1;
-  }
-  y_coord++;
-  return collision || check_collision_body(y_coord, x_coord);
-}
-
-int check_collision_right() {
-  int collision = 0;
-  int y_coord = getData()->y_coord;
-  int x_coord = getData()->x_coord;
-  for (int t = 0; t < TETRAMINO_SIZE && !collision; t++) {
-    if (FIELD_WIDTH - x_coord - 1 >= 0 && FIELD_WIDTH - x_coord - 1 < 5 &&
-        getData()->tetramino_current[t][FIELD_WIDTH - x_coord - 1] == 1)
-      collision = 1;
-  }
-  x_coord++;
-  return collision || check_collision_body(y_coord, x_coord);
-}
-
-int check_collision_left() {
-  int collision = 0;
-  int y_coord = getData()->y_coord;
-  int x_coord = getData()->x_coord;
-  for (int t = 0; t < TETRAMINO_SIZE && !collision; t++) {
-    if (x_coord >= -4 && x_coord < 1 &&
-        getData()->tetramino_current[t][0 - x_coord] == 1)
-      collision = 1;
-  }
-  x_coord--;
-  return collision || check_collision_body(y_coord, x_coord);
-}
-
-int check_collision_body(int y_coord, int x_coord) {
-  int collision = 0;
-  for (int i = y_coord; i < y_coord + TETRAMINO_SIZE && !collision; i++) {
-    for (int j = x_coord; j < x_coord + TETRAMINO_SIZE && !collision; j++) {
-      if (i >= 0 && j >= 0 && i < FIELD_HEIGHT && j < FIELD_WIDTH &&
-          getData()->tetramino_current[i - y_coord][j - x_coord] +
-                  getData()->field_simple[i][j] >
-              1)
-        collision = 1;
-    }
-  }
-  return collision;
-}
-
 void move_left() {
-  {
-    if (!check_collision_left()) getData()->x_coord--;
+  if (!check_collision(getData()->tetramino_current, getData()->y_coord,
+                       getData()->x_coord - 1)) {
+    getData()->x_coord--;
     sum_matrix(&(getInfo()->field));
   }
 }
 void move_right() {
-  if (!check_collision_right()) {
+  if (!check_collision(getData()->tetramino_current, getData()->y_coord,
+                       getData()->x_coord + 1)) {
     getData()->x_coord++;
     sum_matrix(&(getInfo()->field));
   }
 }
 void move_down() {
-  if (!check_collision_down()) {
+  if (!check_collision(getData()->tetramino_current, getData()->y_coord + 1,
+                       getData()->x_coord)) {
     getData()->y_coord++;
     sum_matrix(&(getInfo()->field));
     *getState() = MOVING;
@@ -342,56 +278,114 @@ void move_down() {
     *getState() = ATTACHING;
   }
 }
-void move_up() {
-  getData()->y_coord--;
-  sum_matrix(&(getInfo()->field));
-}
 void rotate() {
-  // IOTLJSZ
-  // if (check_rotate()) {
-  if (1) {
-    if (!check_collision_left()) {
-      move_left();
-    } else if (!check_collision_right()) {
-      move_right();
-    }
-  }
-
   if (getData()->current_type == 'T' || getData()->current_type == 'L' ||
       getData()->current_type == 'J') {
-    // if(getData()->current_type)
-    turn_tetramino('L');
-  } else if (getData()->current_type == 'I' || getData()->current_type == 'S' ||
-             getData()->current_type == 'Z') {
-    if (getData()->tetramino_current[0][2] == 1 ||
-        getData()->tetramino_current[1][1] == 1 ||
-        getData()->tetramino_current[1][3] == 1) {
+    if (!turn_tetramino('l', 0)) {
+      turn_tetramino('L', 0);
+    } else if (!turn_tetramino('l', 1)) {
+      move_right();
+      turn_tetramino('L', 0);
+    } else if (!turn_tetramino('l', -1)) {
+      move_left();
+      turn_tetramino('L', 0);
+    }
+  } else if ((getData()->current_type == 'S' &&
+              getData()->tetramino_current[1][3] == 1) ||
+             getData()->current_type == 'Z' &&
+                 getData()->tetramino_current[1][1] == 1) {
+    if (!turn_tetramino('l', 0)) {
+      turn_tetramino('L', 0);
+    } else if (!turn_tetramino('l', 1)) {
+      move_right();
+      turn_tetramino('L', 0);
+    } else if (!turn_tetramino('l', -1)) {
+      move_left();
+      turn_tetramino('L', 0);
+    }
+  } else if ((getData()->current_type == 'S' &&
+              getData()->tetramino_current[1][3] == 0) ||
+             (getData()->current_type == 'Z' &&
+              getData()->tetramino_current[1][1] == 0)) {
+    if (!turn_tetramino('r', 0)) {
+      turn_tetramino('R', 0);
+    } else if (!turn_tetramino('r', 1)) {
+      move_right();
+      turn_tetramino('R', 0);
+    } else if (!turn_tetramino('r', -1)) {
+      move_left();
+      turn_tetramino('R', 0);
+    }
+  } else if (getData()->current_type == 'I') {
+    if (getData()->tetramino_current[2][0] == 1) {
+      if (!turn_tetramino('r', 0)) turn_tetramino('R', 0);
+    } else {
+      if (!turn_tetramino('l', 0)) {
+        turn_tetramino('L', 0);
+      } else if (!turn_tetramino('l', 1)) {
+        move_right();
+        turn_tetramino('L', 0);
+      } else if (!turn_tetramino('l', 2)) {
+        move_right();
+        move_right();
+        turn_tetramino('L', 0);
+      } else if (!turn_tetramino('l', -1)) {
+        move_left();
+        turn_tetramino('L', 0);
+      }
     }
   }
 }
 
-void turn_tetramino(char direction) {
+int turn_tetramino(char direction, int x_pos) {
+  int cant_turn = 0;
   int tmp_matrix[TETRAMINO_SIZE][TETRAMINO_SIZE];
   for (int i = 0; i < TETRAMINO_SIZE; i++) {
     for (int j = 0; j < TETRAMINO_SIZE; j++) {
-      tmp_matrix[i][j] = getData()->tetramino_current[i][j];
+      if (direction == 'L' || direction == 'l') {
+        tmp_matrix[i][j] =
+            getData()->tetramino_current[TETRAMINO_SIZE - 1 - j][i];
+      } else if (direction == 'R' || direction == 'r') {
+        tmp_matrix[i][j] =
+            getData()->tetramino_current[j][TETRAMINO_SIZE - 1 - i];
+      }
     }
   }
-  for (int i = 0; i < TETRAMINO_SIZE; i++) {
-    for (int j = 0; j < TETRAMINO_SIZE; j++) {
-      if (direction == 'L') {
-        getData()->tetramino_current[i][j] =
-            tmp_matrix[TETRAMINO_SIZE - 1 - j][i];
-      } else if (direction == 'R') {
-        getData()->tetramino_current[i][j] =
-            tmp_matrix[j][TETRAMINO_SIZE - 1 - i];
+  for (int i = 0; i < TETRAMINO_SIZE && !cant_turn; i++) {
+    for (int j = 0; j < TETRAMINO_SIZE && !cant_turn; j++) {
+      if (direction == 'l' || direction == 'r') {
+        int y = getData()->y_coord + i;
+        int x = getData()->x_coord + j + x_pos;
+        if (y >= 0 && y < 20 && x >= 0 && x < 10) {
+          if (tmp_matrix[i][j] + getData()->field_simple[y][x] > 1) cant_turn++;
+        } else if (y > 19 || x < 0 || x > 9) {
+          if (tmp_matrix[i][j] > 0) cant_turn++;
+        }
+
+      } else if (direction == 'L' || direction == 'R') {
+        getData()->tetramino_current[i][j] = tmp_matrix[i][j];
       }
     }
   }
   sum_matrix(&(getInfo()->field));
+  return cant_turn;
 }
 
-int check_rotate() {}
+int check_collision(int **tetramino, int y_coord, int x_coord) {
+  int lock = 0;
+  for (int i = 0; i < TETRAMINO_SIZE && !lock; i++) {
+    for (int j = 0; j < TETRAMINO_SIZE && !lock; j++) {
+      int y = y_coord + i;
+      int x = x_coord + j;
+      if (y >= 0 && y < 20 && x >= 0 && x < 10) {
+        if (tetramino[i][j] + getData()->field_simple[y][x] > 1) lock++;
+      } else if (y > 19 || x < 0 || x > 9) {
+        if (tetramino[i][j] > 0) lock++;
+      }
+    }
+  }
+  return lock;
+}
 
 void timer() {
   static struct timeval start = {0};

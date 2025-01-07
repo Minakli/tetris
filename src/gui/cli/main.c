@@ -1,111 +1,134 @@
 #include "main.h"
 
-int main(){
-    initscr();
-    cbreak();
-    noecho();
-    curs_set(0);
-    timeout(0);
-    keypad(stdscr, TRUE);
-    start_color();
-    init_pair((short)1, COLOR_BLACK, COLOR_YELLOW);
-    init_pair((short)2, COLOR_BLACK, COLOR_WHITE);
-    
+int main() {
+  int err = -1;
 
-    int end = 1;
-    while(end) {
-        int ch = getch();
-        switch (ch) {
-            case '\n':
-                userInput(Start, false);
-                break;
-            case KEY_LEFT:
-            case 'a':
-            case 'A':
-                userInput(Left, false);
-                break;
-            case KEY_RIGHT:
-                userInput(Right, false);
-                break;
-            case KEY_UP:
-                userInput(Up, false);
-                break;
-            case KEY_DOWN:
-                userInput(Down, false);
-                break;
-            case ' ':
-                userInput(Action, false);
-                break;
-            case 'p':
-                userInput(Pause, false);
-                break;
-            case 'q':
-                userInput(Terminate, false);
-                end = 0;
-                break;
-            default:
-                break;
-        }
-    // clear();  
-    // usleep(1000);
+  initscr();
+  cbreak();
+  noecho();
+  curs_set(0);
+  timeout(0);
+  keypad(stdscr, TRUE);
+  start_color();
+  init_pair((short)1, COLOR_BLACK, COLOR_YELLOW);
+  init_pair((short)2, COLOR_BLACK, COLOR_WHITE);
+
+  while (err < 0) {
+    int ch = getch();
+    switch (ch) {
+      case '\n':
+        userInput(Start, false);
+        break;
+      case KEY_LEFT:
+      case 'a':
+      case 'A':
+        userInput(Left, false);
+        break;
+      case KEY_RIGHT:
+        userInput(Right, false);
+        break;
+      case KEY_UP:
+        userInput(Up, false);
+        break;
+      case KEY_DOWN:
+        userInput(Down, false);
+        break;
+      case ' ':
+        userInput(Action, false);
+        break;
+      case 'p':
+        userInput(Pause, false);
+        break;
+      case 'q':
+        userInput(Terminate, false);
+        err = 0;
+        break;
+      default:
+        break;
+    }
     napms(5);
     refresh();
-    print_game(updateCurrentState());
-    }
-    endwin();
-    // free();
-    return end;
+    err = print_game(updateCurrentState());
+  }
+  endwin();
+  return err;
 }
 
-void print_game(GameInfo_t info){
-        attron(COLOR_PAIR(2));
-        move(1,22);
-    for(int i = 0; i < 20; i++) {
-        move(i + 1, 22);
-        for(int j = 0; j < 16; j++) {
-            printw(" ");
-        }
+int print_game(GameInfo_t info) {
+  int terminate = -1;
+  if (info.pause == -1) {
+    terminate = 1;
+  } else if (info.pause == -2) {
+    terminate = 0;
+  } else {
+    attron(COLOR_PAIR(2));
+    move(1, 22);
+    for (int i = 0; i < 20; i++) {
+      move(i + 1, 22);
+      for (int j = 0; j < 16; j++) {
+        printw(" ");
+      }
     }
-    mvprintw(11, 25, "LEVEL:");
-    mvprintw(12, 25, "%d", info.level);
-    mvprintw(14, 25, "SCORE:");
-    mvprintw(15, 25, "%d", info.score);
-    mvprintw(17, 25,"TOP SCORE:");
-    mvprintw(18, 25,"%d", info.high_score);
+    mvprintw(9, 25, "SPEED:");
+    mvprintw(10, 25, "%d ms", info.speed);
+    mvprintw(12, 25, "LEVEL:");
+    mvprintw(13, 25, "%d", info.level);
+    mvprintw(15, 25, "SCORE:");
+    mvprintw(16, 25, "%d", info.score);
+    mvprintw(18, 25, "TOP SCORE:");
+    mvprintw(19, 25, "%d", info.high_score);
     attroff(COLOR_PAIR(2));
     print_field(info.field);
     print_next(info.next);
+    if (info.pause > 0) {
+      attron(COLOR_PAIR(2));
+      mvprintw(10, 5, "<< PAUSE >>");
+      mvprintw(11, 2, "Press p for resume");
+      mvprintw(12, 10, "or ");
+      mvprintw(13, 4, "Enter for next");
+      attroff(COLOR_PAIR(2));
+    }
+    if (info.pause == -10) {
+      attron(COLOR_PAIR(2));
+      mvprintw(10, 3, "<< GAME OVER >>");
+      mvprintw(11, 1, "Press Enter for next");
+    }
+  }
+  return terminate;
 }
 
-void print_field(int **field ){
-    for(int i = 0; i < 20; i++){
-        move(i + 1, 1);
-        for(int j = 0; j < 10; j++){
-            if(field[i][j] > 0) {
-                attron(COLOR_PAIR(1));
-                printw("  ");
-                attroff(COLOR_PAIR(1));
-            } else {
-                attron(COLOR_PAIR(2));
-                printw("  ");
-                attroff(COLOR_PAIR(2));
-            }
+void print_field(int **field) {
+  if (field) {
+    for (int i = 0; i < 20; i++) {
+      move(i + 1, 1);
+      for (int j = 0; j < 10; j++) {
+        if (field[i][j] > 0) {
+          attron(COLOR_PAIR(1));
+          printw("  ");
+          attroff(COLOR_PAIR(1));
+        } else {
+          attron(COLOR_PAIR(2));
+          printw("  ");
+          attroff(COLOR_PAIR(2));
         }
-
+      }
     }
+  }
 }
 
-void print_next(int **next){
-    for(int i = 0; i < 5; i++){
-        move(i + 2, 25);
-        for(int j = 0; j < 5; j++){
-            if(next[i][j] == 1) {
-                printw("  ");
-            } else {
-                attron(COLOR_PAIR(2));
-                printw("  ");
-                attroff(COLOR_PAIR(2));
-            }
+void print_next(int **next) {
+  if (next) {
+    for (int i = 0; i < 5; i++) {
+      move(i + 2, 25);
+      for (int j = 0; j < 5; j++) {
+        if (next[i][j] == 1) {
+          printw("  ");
+        } else {
+          attron(COLOR_PAIR(2));
+          printw("  ");
+          attroff(COLOR_PAIR(2));
         }
+      }
     }
+  }
 }

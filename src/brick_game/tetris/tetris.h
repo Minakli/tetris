@@ -33,29 +33,24 @@ typedef struct
 
 GameInfo_t* getInfo();
 Field_data *getData();
-void set_coords();
-void spawn_next();
+int spawn_next();
 int* getState();
 void create_next(int ***tetramino);
 int create_matrix(int ***matrix, int str, int col);
 void clear_matrix(int ***matrix, int row, int col);
 int check_collision(int **tetramino, int y_coord, int x_coord);
-int check_collision_down();
-int check_collision_right();
-int check_collision_body(int y_coord, int x_coord);
+void remove_matrix(int ***matrix, int str);
 int sum_matrix(int ***result_field);
-int set_score();
-int set_high_score();
-int set_level();
-int set_speed();
-int set_pause();
 void move_left();
 void move_right();
 void move_down();
 void rotate();
+void rotate_left();
 void timer();
 int turn_tetramino(char direction, int x_pos);
-int check_fill();
+void check_fill();
 void delete_full_line(int y_index);
+void restartGame();
+void saveResult();
 
 #endif

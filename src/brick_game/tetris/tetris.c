@@ -1,36 +1,43 @@
 #include "./tetris.h"
 
 GameInfo_t *getInfo() {
-  static GameInfo_t game_info = {NULL, NULL, 0, -1, 1, 1, 0};
+  static GameInfo_t info = {NULL, NULL, 0, 0, 1, 1, 0};
 
-  if (!(game_info.field))
-    create_matrix(&(game_info.field), FIELD_HEIGHT, FIELD_WIDTH);
-  if (!(game_info.next))
-    create_matrix(&(game_info.next), TETRAMINO_SIZE, TETRAMINO_SIZE);
-  if (game_info.high_score < 0) {
-    game_info.high_score = 0;
-    FILE *file = fopen("./brick_game_hight_score.txt", "r");
-    if (file) {
-      fscanf(file, "%d", &(game_info.high_score));
-      fclose(file);
+  if (!(info.field) && (info.pause != -1 && info.pause != -2)) {
+    if (create_matrix(&(info.field), FIELD_HEIGHT, FIELD_WIDTH))
+      info.pause = -1;
+  }
+  if (!(info.next) && (info.pause != -1 && info.pause != -2)) {
+    if (create_matrix(&(info.next), TETRAMINO_SIZE, TETRAMINO_SIZE))
+      info.pause = -1;
+  }
+  if (info.pause != -1 && info.pause != -2) {
+    int tmp_high_score = 0;
+    if (info.high_score < 1) {
+      FILE *file = fopen("./brick_game_high_score.txt", "r");
+      if (file) {
+        fscanf(file, "%d", &tmp_high_score);
+        if (info.high_score < tmp_high_score) info.high_score = tmp_high_score;
+        fclose(file);
+      }
     }
   }
-  set_score();
-  // set_high_score();
-  // set_level();
-  // set_speed();
-  game_info.speed = 0;
-  // set_pause();
-  game_info.level = *getState();
-  return &game_info;
+  return &info;
 }
 
 Field_data *getData() {
   static Field_data data = {NULL, NULL, 0, 0};
-  if (!data.field_simple)
-    create_matrix(&(data.field_simple), FIELD_HEIGHT, FIELD_WIDTH);
-  if (!(data.tetramino_current))
-    create_matrix(&(data.tetramino_current), TETRAMINO_SIZE, TETRAMINO_SIZE);
+  if (getInfo()->pause != -1 && getInfo()->pause != -2) {
+    if (!data.field_simple) {
+      if (create_matrix(&(data.field_simple), FIELD_HEIGHT, FIELD_WIDTH))
+        getInfo()->pause = 1;
+    }
+    if (!data.tetramino_current) {
+      if (create_matrix(&(data.tetramino_current), TETRAMINO_SIZE,
+                        TETRAMINO_SIZE))
+        getInfo()->pause = 1;
+    }
+  }
   return &data;
 }
 
@@ -40,38 +47,40 @@ int *getState() {
 }
 
 GameInfo_t updateCurrentState() {
-  getInfo();
-  getData();
-  getState();
-  getInfo()->high_score++;
-  switch (*getState()) {
-    case MOVING:
-      timer();
-      break;
-    case SHIFTING:
-      move_down();
-      break;
-    case PAUSE:
-      /* code */
-      break;
-    case SPAWN:
-      // check_fill();
-      spawn_next();
-      *getState() = MOVING;
-      break;
-    case ATTACHING:
-      sum_matrix(&(getData()->field_simple));
-      check_fill();
-      // sum_matrix(&(getInfo()->field_simple));
-      *getState() = SPAWN;
-      break;
-    case GAME_OVER:
-      /* code */
-      break;
-    default:
-      break;
+  if (getInfo()->pause != -1 && getInfo()->pause != -2) {
+    getData();
+    getState();
+    switch (*getState()) {
+      case MOVING:
+        timer();
+        break;
+      case SHIFTING:
+        move_down();
+        break;
+      case SPAWN:
+        if (!spawn_next()) {
+          *getState() = MOVING;
+        } else {
+          *getState() = GAME_OVER;
+        }
+        break;
+      case ATTACHING:
+        sum_matrix(&(getData()->field_simple));
+        check_fill();
+        *getState() = SPAWN;
+        break;
+      case GAME_OVER:
+        saveResult();
+        break;
+      default:
+        break;
+    }
+  } else {
+    remove_matrix(&(getData()->tetramino_current), TETRAMINO_SIZE);
+    remove_matrix(&(getData()->field_simple), FIELD_HEIGHT);
+    remove_matrix(&(getInfo()->next), TETRAMINO_SIZE);
+    remove_matrix(&(getInfo()->field), FIELD_HEIGHT);
   }
-  // sum_matrix(&(getInfo()->field));
   return *(getInfo());
 }
 
@@ -81,40 +90,64 @@ void userInput(UserAction_t action, bool hold) {
       if (*getState() == START) {
         create_next(&(getInfo()->next));
         *getState() = SPAWN;
+      } else if (*getState() == PAUSE || *getState() == GAME_OVER) {
+        saveResult();
+        restartGame();
+        create_next(&(getInfo()->next));
+        *getState() = SPAWN;
       }
       break;
     case Pause:
-      if (*getState() == MOVING) *getState() = PAUSE;
-      if (*getState() == PAUSE) *getState() = MOVING;
+      if (*getState() == PAUSE) {
+        *getState() = MOVING;
+        getInfo()->pause = 0;
+      } else {
+        *getState() = PAUSE;
+        getInfo()->pause = 1;
+      }
       break;
     case Terminate:
-      *getState() = GAME_OVER;
+      saveResult();
+      getInfo()->pause = -2;
+      remove_matrix(&(getData()->tetramino_current), TETRAMINO_SIZE);
+      remove_matrix(&(getData()->field_simple), FIELD_HEIGHT);
+      remove_matrix(&(getInfo()->next), TETRAMINO_SIZE);
+      remove_matrix(&(getInfo()->field), FIELD_HEIGHT);
       break;
     case Left:
-      // if(*getState() == MOVING)
-      getInfo()->high_score = action;
-      move_left();
+      if (*getState() == MOVING) move_left();
       break;
     case Right:
-      getInfo()->high_score = action;
-
       if (*getState() == MOVING) move_right();
       break;
     case Down:
-      getInfo()->high_score = action;
-      move_down();
+      if (*getState() == MOVING) move_down();
       break;
     case Up:
-      getData()->y_coord--;
-      sum_matrix(&(getInfo()->field));
       break;
     case Action:
       rotate();
-      // rotate();
       break;
     default:
       break;
   }
+}
+
+void restartGame() {
+  for (int i = 0; i < FIELD_HEIGHT; i++) {
+    for (int j = 0; j < FIELD_WIDTH; j++) {
+      getData()->field_simple[i][j] = 0;
+      getInfo()->field[i][j] = 0;
+      if (i < TETRAMINO_SIZE && j < TETRAMINO_SIZE) {
+        getData()->tetramino_current[i][j] = 0;
+        getInfo()->next[i][j] = 0;
+      }
+    }
+  }
+  getInfo()->level = 0;
+  getInfo()->score = 0;
+  getInfo()->speed = 0;
+  getInfo()->pause = 0;
 }
 
 int create_matrix(int ***matrix, int str, int col) {
@@ -142,10 +175,12 @@ int create_matrix(int ***matrix, int str, int col) {
 }
 
 void remove_matrix(int ***matrix, int str) {
-  for (int i = 0; i < str; i++) {
-    if ((*matrix)[i]) {
-      free((*matrix)[i]);
-      (*matrix)[i] = NULL;
+  if (*matrix) {
+    for (int i = 0; i < str; i++) {
+      if ((*matrix)[i]) {
+        free((*matrix)[i]);
+        (*matrix)[i] = NULL;
+      }
     }
   }
   if (*matrix) {
@@ -154,7 +189,8 @@ void remove_matrix(int ***matrix, int str) {
   }
 }
 
-void spawn_next() {
+int spawn_next() {
+  int err = 0;
   for (int i = 0; i < TETRAMINO_SIZE; i++) {
     for (int j = 0; j < TETRAMINO_SIZE; j++) {
       (getData()->tetramino_current)[i][j] = (getInfo()->next)[i][j];
@@ -162,8 +198,14 @@ void spawn_next() {
   }
   getData()->x_coord = 3;
   getData()->y_coord = -3;
-  getData()->current_type = getData()->next_type;
-  create_next(&(getInfo()->next));
+  if (check_collision(getData()->tetramino_current, -2, 3)) {
+    err = 1;
+    getInfo()->pause = -10;
+  } else {
+    getData()->current_type = getData()->next_type;
+    create_next(&(getInfo()->next));
+  }
+  return err;
 }
 
 int sum_matrix(int ***result_field) {
@@ -245,15 +287,6 @@ void clear_matrix(int ***matrix, int row, int col) {
   }
 }
 
-int set_score() {
-  // if(getData()->x_coord) getInfo()->score = getData()->x_coord;
-}
-int set_high_score() {}
-int set_level() { getInfo()->level = *getState(); }
-void check_attaching() {}
-int set_speed() {}
-int set_pause() {}
-
 void move_left() {
   if (!check_collision(getData()->tetramino_current, getData()->y_coord,
                        getData()->x_coord - 1)) {
@@ -261,6 +294,7 @@ void move_left() {
     sum_matrix(&(getInfo()->field));
   }
 }
+
 void move_right() {
   if (!check_collision(getData()->tetramino_current, getData()->y_coord,
                        getData()->x_coord + 1)) {
@@ -268,6 +302,7 @@ void move_right() {
     sum_matrix(&(getInfo()->field));
   }
 }
+
 void move_down() {
   if (!check_collision(getData()->tetramino_current, getData()->y_coord + 1,
                        getData()->x_coord)) {
@@ -278,31 +313,28 @@ void move_down() {
     *getState() = ATTACHING;
   }
 }
+
+void rotate_left() {
+  if (!turn_tetramino('l', 0)) {
+    turn_tetramino('L', 0);
+  } else if (!turn_tetramino('l', 1)) {
+    move_right();
+    turn_tetramino('L', 0);
+  } else if (!turn_tetramino('l', -1)) {
+    move_left();
+    turn_tetramino('L', 0);
+  }
+}
+
 void rotate() {
   if (getData()->current_type == 'T' || getData()->current_type == 'L' ||
       getData()->current_type == 'J') {
-    if (!turn_tetramino('l', 0)) {
-      turn_tetramino('L', 0);
-    } else if (!turn_tetramino('l', 1)) {
-      move_right();
-      turn_tetramino('L', 0);
-    } else if (!turn_tetramino('l', -1)) {
-      move_left();
-      turn_tetramino('L', 0);
-    }
+    rotate_left();
   } else if ((getData()->current_type == 'S' &&
               getData()->tetramino_current[1][3] == 1) ||
              getData()->current_type == 'Z' &&
                  getData()->tetramino_current[1][1] == 1) {
-    if (!turn_tetramino('l', 0)) {
-      turn_tetramino('L', 0);
-    } else if (!turn_tetramino('l', 1)) {
-      move_right();
-      turn_tetramino('L', 0);
-    } else if (!turn_tetramino('l', -1)) {
-      move_left();
-      turn_tetramino('L', 0);
-    }
+    rotate_left();
   } else if ((getData()->current_type == 'S' &&
               getData()->tetramino_current[1][3] == 0) ||
              (getData()->current_type == 'Z' &&
@@ -392,15 +424,16 @@ void timer() {
   if (start.tv_sec == 0) gettimeofday(&start, NULL);
   struct timeval end = {0};
   gettimeofday(&end, NULL);
-  if ((end.tv_sec * 100 + end.tv_usec / 10000) -
-          (start.tv_sec * 100 + start.tv_usec / 10000) >
-      75 - 5 * getInfo()->speed) {
+  if ((end.tv_sec * 1000 + end.tv_usec / 1000) -
+          (start.tv_sec * 1000 + start.tv_usec / 1000) >
+      650 - 50 * getInfo()->level) {
     *getState() = SHIFTING;
     start = end;
   }
+  getInfo()->speed = 650 - 50 * getInfo()->level;
 }
 
-int check_fill() {
+void check_fill() {
   int full_lines_count = 0;
   for (int i = 0; i < FIELD_HEIGHT; i++) {
     int is_full = 1;
@@ -413,7 +446,11 @@ int check_fill() {
     }
   }
   sum_matrix(&(getInfo()->field));
-  return full_lines_count;
+  int score = 1;
+  while (full_lines_count--) score *= 2;
+  getInfo()->score += 100 * (score - 1);
+  getInfo()->level = getInfo()->score / 600 + 1;
+  if (getInfo()->level > 10) getInfo()->level = 10;
 }
 
 void delete_full_line(int y_index) {
@@ -424,5 +461,15 @@ void delete_full_line(int y_index) {
   }
   for (int j = 0; j < FIELD_WIDTH; j++) {
     getData()->field_simple[0][j] = 0;
+  }
+}
+
+void saveResult() {
+  FILE *file = fopen("./brick_game_high_score.txt", "w");
+  if (file) {
+    if (getInfo()->score > getInfo()->high_score) {
+      fprintf(file, "%d", getInfo()->score);
+    }
+    fclose(file);
   }
 }

@@ -6,9 +6,8 @@
 #include <unistd.h>
 #include "../../brick_game/brick_game.h"
 
-void print_menu();
-void print_game();
-void print_field();
-void print_next();
+int print_game(GameInfo_t info);
+void print_field(int **field);
+void print_next(int **next) ;
 
 #endif

@@ -28,7 +28,9 @@ build/brick_game/tetris/%.o: src/brick_game/tetris/%.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
 clang:
+	clang-format -n src/brick_game/tetris/*.c
 	clang-format -i src/brick_game/tetris/*.c
+	clang-format -n src/gui/cli/*.c
 	clang-format -i src/gui/cli/*.c
 
 clean:
@@ -37,8 +39,8 @@ clean:
 
 install: all
 	cp build/tetris /usr/local/bin/
-# cp build/brick_game_high_score.txt /usr/local/bin/brick_game_high_score.txt
+	touch /usr/local/bin/brick_game_high_score.txt
 
 uninstall: clean
 	rm /usr/local/bin/tetris
-# rm /usr/local/bin/brick_game_high_score.txt
+	rm /usr/local/bin/brick_game_high_score.txt

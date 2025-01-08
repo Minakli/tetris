@@ -3,6 +3,20 @@
 GameInfo_t *getInfo() {
   static GameInfo_t info = {NULL, NULL, 0, 0, 1, 1, 0};
 
+  if (!info.field && info.pause != -1 && info.pause != -2) {
+    int tmp_high_score = 0;
+    if (info.high_score < 1) {
+      FILE *file = fopen("/usr/local/bin/brick_game_high_score.txt", "r");
+      if (!file) {
+        file = fopen("build/brick_game_high_score.txt", "r");
+      }
+      if (file) {
+        fscanf(file, "%d", &tmp_high_score);
+        if (info.high_score < tmp_high_score) info.high_score = tmp_high_score;
+        fclose(file);
+      }
+    }
+  }
   if (!(info.field) && (info.pause != -1 && info.pause != -2)) {
     if (create_matrix(&(info.field), FIELD_HEIGHT, FIELD_WIDTH))
       info.pause = -1;
@@ -10,17 +24,6 @@ GameInfo_t *getInfo() {
   if (!(info.next) && (info.pause != -1 && info.pause != -2)) {
     if (create_matrix(&(info.next), TETRAMINO_SIZE, TETRAMINO_SIZE))
       info.pause = -1;
-  }
-  if (info.pause != -1 && info.pause != -2) {
-    int tmp_high_score = 0;
-    if (info.high_score < 1) {
-      FILE *file = fopen("./brick_game_high_score.txt", "r");
-      if (file) {
-        fscanf(file, "%d", &tmp_high_score);
-        if (info.high_score < tmp_high_score) info.high_score = tmp_high_score;
-        fclose(file);
-      }
-    }
   }
   return &info;
 }
@@ -465,11 +468,17 @@ void delete_full_line(int y_index) {
 }
 
 void saveResult() {
-  FILE *file = fopen("./brick_game_high_score.txt", "w");
-  if (file) {
-    if (getInfo()->score > getInfo()->high_score) {
-      fprintf(file, "%d", getInfo()->score);
+  if (getInfo()->score > getInfo()->high_score) {
+    FILE *file = fopen("/usr/local/bin/brick_game_high_score.txt", "r");
+    if (file) {
+      fclose(file);
+      file = fopen("/usr/local/bin/brick_game_high_score.txt", "w");
+    } else {
+      file = fopen("build/brick_game_high_score.txt", "w");
     }
-    fclose(file);
+    if (file) {
+      fprintf(file, "%d", getInfo()->score);
+      fclose(file);
+    }
   }
 }

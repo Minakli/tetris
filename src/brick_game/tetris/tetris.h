@@ -1,15 +1,15 @@
 /**
  * @file tetris.h
  * @brief Header file for the Tetris game logic.
- * 
+ *
  * This file contains definitions, constants, and function prototypes
  * required for the Tetris game implementation.
  */
-#include <stdlib.h>
 #include <stdio.h>
-#include <time.h>
-#include <unistd.h> 
+#include <stdlib.h>
 #include <sys/time.h>
+#include <time.h>
+#include <unistd.h>
 
 #include "../brick_game.h"
 
@@ -47,20 +47,19 @@
  * @struct Field_data
  * @brief Structure representing the game field and tetramino state.
  */
-typedef struct
-{
-    int **field_simple;
-    int **tetramino_current;
-    int x_coord;
-    int y_coord;
-    int next_type;
-    int current_type;
+typedef struct {
+  int **field_simple;
+  int **tetramino_current;
+  int x_coord;
+  int y_coord;
+  int next_type;
+  int current_type;
 } Field_data;
 
-GameInfo_t* getInfo();
+GameInfo_t *getInfo();
 Field_data *getData();
 int spawn_next();
-int* getState();
+int *getState();
 void createNext(int ***tetramino);
 int createMatrix(int ***matrix, int str, int col);
 void clearMatrix(int ***matrix, int row, int col);

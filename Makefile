@@ -27,10 +27,10 @@ build/brick_game/tetris/%.o: src/brick_game/tetris/%.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
 clang:
-	clang-format -n src/brick_game/tetris/*.c
-	clang-format -i src/brick_game/tetris/*.c
-	clang-format -n src/gui/cli/*.c
-	clang-format -i src/gui/cli/*.c
+	clang-format -n src/brick_game/tetris/*.c src/brick_game/tetris/*.h
+	clang-format -i src/brick_game/tetris/*.c src/brick_game/tetris/*.h
+	clang-format -n src/gui/cli/*.c src/gui/cli/*.h
+	clang-format -i src/gui/cli/*.c src/gui/cli/*.h
 
 clean:
 	rm -rf build

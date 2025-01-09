@@ -9,9 +9,10 @@
  * the main game loop, printing the game field, and managing game states.
  */
 
-#include <stdio.h>
 #include <ncurses.h>
+#include <stdio.h>
 #include <unistd.h>
+
 #include "../../brick_game/brick_game.h"
 
 #define MEM_ERROR -1
@@ -20,6 +21,7 @@
 
 int printGame(GameInfo_t info);
 void printField(int **field);
-void printNext(int **next) ;
+void printNext(int **next);
+int hotKeys();
 
 #endif

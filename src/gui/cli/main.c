@@ -12,7 +12,7 @@
  * code.
  */
 int main() {
-  int err = -1;
+  int quit = -1;
 
   initscr();
   cbreak();
@@ -24,45 +24,75 @@ int main() {
   init_pair((short)1, COLOR_BLACK, COLOR_YELLOW);
   init_pair((short)2, COLOR_BLACK, COLOR_WHITE);
 
-  while (err < 0) {
-    int ch = getch();
-    switch (ch) {
-      case '\n':
-        userInput(Start, false);
-        break;
-      case KEY_LEFT:
-      case 'a':
-      case 'A':
-        userInput(Left, false);
-        break;
-      case KEY_RIGHT:
-        userInput(Right, false);
-        break;
-      case KEY_UP:
-        userInput(Up, false);
-        break;
-      case KEY_DOWN:
-        userInput(Down, false);
-        break;
-      case ' ':
-        userInput(Action, false);
-        break;
-      case 'p':
-        userInput(Pause, false);
-        break;
-      case 'q':
-        userInput(Terminate, false);
-        err = 0;
-        break;
-      default:
-        break;
-    }
+  while (quit < 0) {
+    quit = hotKeys();
     napms(5);
     refresh();
-    err = printGame(updateCurrentState());
+    quit = printGame(updateCurrentState());
   }
   endwin();
-  return err;
+  return quit;
+}
+
+/**
+ * @brief Handles user input and maps key presses to corresponding actions.
+ *
+ * This function captures key presses using `getch()` and processes them by
+ * calling `userInput()` with appropriate parameters based on the key pressed.
+ * It also handles the "quit" functionality.
+ *
+ * @return Returns `0` if the "quit" key ('q') is pressed, otherwise returns
+ * `-1`.
+ *
+ * @details
+ * - Key mappings:
+ *   - `'\n'` (Enter): Calls `userInput(Start, false)`.
+ *   - `KEY_LEFT`, 'a', 'A': Calls `userInput(Left, false)`.
+ *   - `KEY_RIGHT`: Calls `userInput(Right, false)`.
+ *   - `KEY_UP`: Calls `userInput(Up, false)`.
+ *   - `KEY_DOWN`: Calls `userInput(Down, false)`.
+ *   - `' '` (Space): Calls `userInput(Action, false)`.
+ *   - `'p'`: Calls `userInput(Pause, false)`.
+ *   - `'q'`: Calls `userInput(Terminate, false)` and sets `quit` to `0`.
+ * - If no recognized key is pressed, the function does nothing.
+ */
+int hotKeys() {
+  int quit = -1;
+  int ch = getch();
+  switch (ch) {
+    case '\n':
+      userInput(Start, false);
+      break;
+    case KEY_LEFT:
+    case 'a':
+    case 'A':
+      userInput(Left, false);
+      break;
+    case KEY_RIGHT:
+      userInput(Right, false);
+      break;
+    case KEY_UP:
+      userInput(Up, false);
+      break;
+    case KEY_DOWN:
+      userInput(Down, false);
+      break;
+    case ' ':
+      userInput(Action, false);
+      break;
+    case 'p':
+    case 'P':
+      userInput(Pause, false);
+      break;
+    case 'q':
+    case 'Q':
+      userInput(Terminate, false);
+      quit = 0;
+      break;
+    default:
+      break;
+  }
+  return quit;
 }
 
 /**

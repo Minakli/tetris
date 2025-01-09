@@ -1,6 +1,5 @@
 CC = gcc
-# CFLAGS = -std=c11 -Wall -Wextra
-CFLAGS = -g
+CFLAGS = -std=c11 -Wall -Wextra -Werror
 
 SRC_UI = $(shell find src/gui/cli -name "*.c")
 SRC_TETRIS = $(shell find src/brick_game/tetris/ -name "*.c")
@@ -35,7 +34,9 @@ clang:
 
 clean:
 	rm -rf build
-# rm -f brick_game_high_score.txt
+	rm -rf src/dvi
+	rm -f build/brick_game_high_score.txt
+	rm -f src/refman.pdf
 
 install: all
 	cp build/tetris /usr/local/bin/
@@ -44,3 +45,15 @@ install: all
 uninstall: clean
 	rm /usr/local/bin/tetris
 	rm /usr/local/bin/brick_game_high_score.txt
+
+dvi: 
+	mkdir -p src/dvi
+	@cd src && doxygen Doxyfile  > /dev/null 2>&1 && cd ..
+	@cd src/dvi && latexmk -silent -pdf refman.tex && cd ../..
+	mv src/dvi/refman.pdf src/refman.pdf
+	rm -rf src/dvi
+
+
+# apt-get install texlive
+# sudo apt-get install texlive-latex-extra
+# apt-get install doxygen

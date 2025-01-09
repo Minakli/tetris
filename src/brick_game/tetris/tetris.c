@@ -1,9 +1,19 @@
 #include "./tetris.h"
 
+/**
+ * @brief Gets the current game information.
+ *
+ * This function initializes and retrieves the current game state, including the
+ * game field, next piece, and other important parameters. If the field or next
+ * piece has not been created, it attempts to create them. It also retrieves the
+ * high score from a file if necessary.
+ *
+ * @return GameInfo_t* Pointer to the current game information structure.
+ */
 GameInfo_t *getInfo() {
   static GameInfo_t info = {NULL, NULL, 0, 0, 1, 1, 0};
 
-  if (!info.field && info.pause != -1 && info.pause != -2) {
+  if (!info.field && info.pause != EXIT && info.pause != MEM_ERROR) {
     int tmp_high_score = 0;
     if (info.high_score < 1) {
       FILE *file = fopen("/usr/local/bin/brick_game_high_score.txt", "r");
@@ -17,40 +27,68 @@ GameInfo_t *getInfo() {
       }
     }
   }
-  if (!(info.field) && (info.pause != -1 && info.pause != -2)) {
-    if (create_matrix(&(info.field), FIELD_HEIGHT, FIELD_WIDTH))
-      info.pause = -1;
+  if (!(info.field) && (info.pause != EXIT && info.pause != MEM_ERROR)) {
+    if (createMatrix(&(info.field), FIELD_HEIGHT, FIELD_WIDTH))
+      info.pause = MEM_ERROR;
   }
-  if (!(info.next) && (info.pause != -1 && info.pause != -2)) {
-    if (create_matrix(&(info.next), TETRAMINO_SIZE, TETRAMINO_SIZE))
-      info.pause = -1;
+  if (!(info.next) && (info.pause != EXIT && info.pause != MEM_ERROR)) {
+    if (createMatrix(&(info.next), TETRAMINO_SIZE, TETRAMINO_SIZE))
+      info.pause = MEM_ERROR;
   }
   return &info;
 }
 
+/**
+ * @brief Gets the current field data.
+ *
+ * This function initializes and retrieves the current field data, which
+ * includes the simplified game field and the current tetramino piece. If the
+ * required matrices are not created, it attempts to create them.
+ *
+ * @return Field_data* Pointer to the current field data structure.
+ */
 Field_data *getData() {
-  static Field_data data = {NULL, NULL, 0, 0};
-  if (getInfo()->pause != -1 && getInfo()->pause != -2) {
+  static Field_data data = {NULL, NULL, 0, 0, 0, 0};
+  if (getInfo()->pause != EXIT && getInfo()->pause != MEM_ERROR) {
     if (!data.field_simple) {
-      if (create_matrix(&(data.field_simple), FIELD_HEIGHT, FIELD_WIDTH))
-        getInfo()->pause = 1;
+      if (createMatrix(&(data.field_simple), FIELD_HEIGHT, FIELD_WIDTH))
+        getInfo()->pause = MEM_ERROR;
     }
     if (!data.tetramino_current) {
-      if (create_matrix(&(data.tetramino_current), TETRAMINO_SIZE,
-                        TETRAMINO_SIZE))
-        getInfo()->pause = 1;
+      if (createMatrix(&(data.tetramino_current), TETRAMINO_SIZE,
+                       TETRAMINO_SIZE))
+        getInfo()->pause = MEM_ERROR;
     }
   }
   return &data;
 }
 
+/**
+ * @brief Gets the current state of the game.
+ *
+ * This function returns a pointer to the current game state, which is a static
+ * integer representing the current state of the game (e.g., MOVING, SPAWN,
+ * GAME_OVER).
+ *
+ * @return int* Pointer to the current game state.
+ */
 int *getState() {
   static int state = START;
   return &state;
 }
 
+/**
+ * @brief Updates the current game state.
+ *
+ * This function processes the current game state and updates it accordingly.
+ * Depending on the state (e.g., MOVING, SHIFTING, SPAWN), it performs actions
+ * such as moving pieces, spawning new pieces, or attaching the current piece to
+ * the field. If the game is over, the result is saved.
+ *
+ * @return GameInfo_t Updated game information.
+ */
 GameInfo_t updateCurrentState() {
-  if (getInfo()->pause != -1 && getInfo()->pause != -2) {
+  if (getInfo()->pause != MEM_ERROR && getInfo()->pause != EXIT) {
     getData();
     getState();
     switch (*getState()) {
@@ -58,7 +96,7 @@ GameInfo_t updateCurrentState() {
         timer();
         break;
       case SHIFTING:
-        move_down();
+        moveDown();
         break;
       case SPAWN:
         if (!spawn_next()) {
@@ -68,8 +106,8 @@ GameInfo_t updateCurrentState() {
         }
         break;
       case ATTACHING:
-        sum_matrix(&(getData()->field_simple));
-        check_fill();
+        sumMatrix(&(getData()->field_simple));
+        checkFill();
         *getState() = SPAWN;
         break;
       case GAME_OVER:
@@ -79,24 +117,38 @@ GameInfo_t updateCurrentState() {
         break;
     }
   } else {
-    remove_matrix(&(getData()->tetramino_current), TETRAMINO_SIZE);
-    remove_matrix(&(getData()->field_simple), FIELD_HEIGHT);
-    remove_matrix(&(getInfo()->next), TETRAMINO_SIZE);
-    remove_matrix(&(getInfo()->field), FIELD_HEIGHT);
+    removeMatrix(&(getData()->tetramino_current), TETRAMINO_SIZE);
+    removeMatrix(&(getData()->field_simple), FIELD_HEIGHT);
+    removeMatrix(&(getInfo()->next), TETRAMINO_SIZE);
+    removeMatrix(&(getInfo()->field), FIELD_HEIGHT);
   }
   return *(getInfo());
 }
 
+/**
+ * @brief Processes the user input for various actions.
+ *
+ * This function handles the input from the user and updates the game state
+ * based on the action performed. Depending on the action (e.g., Start, Pause,
+ * Terminate), it can start the game, pause it, or terminate it. It also handles
+ * the movement of tetrominoes (Left, Right, Down) and actions such as rotating
+ * pieces.
+ *
+ * @param action The action to perform (e.g., Start, Pause, Left).
+ * @param hold A flag indicating whether the action should be held or not (e.g.,
+ * for continuous movement).
+ */
 void userInput(UserAction_t action, bool hold) {
+  if (hold) *getState() = MOVING;
   switch (action) {
     case Start:
       if (*getState() == START) {
-        create_next(&(getInfo()->next));
+        createNext(&(getInfo()->next));
         *getState() = SPAWN;
       } else if (*getState() == PAUSE || *getState() == GAME_OVER) {
         saveResult();
         restartGame();
-        create_next(&(getInfo()->next));
+        createNext(&(getInfo()->next));
         *getState() = SPAWN;
       }
       break;
@@ -104,27 +156,27 @@ void userInput(UserAction_t action, bool hold) {
       if (*getState() == PAUSE) {
         *getState() = MOVING;
         getInfo()->pause = 0;
-      } else {
+      } else if (*getState() == MOVING) {
         *getState() = PAUSE;
         getInfo()->pause = 1;
       }
       break;
     case Terminate:
       saveResult();
-      getInfo()->pause = -2;
-      remove_matrix(&(getData()->tetramino_current), TETRAMINO_SIZE);
-      remove_matrix(&(getData()->field_simple), FIELD_HEIGHT);
-      remove_matrix(&(getInfo()->next), TETRAMINO_SIZE);
-      remove_matrix(&(getInfo()->field), FIELD_HEIGHT);
+      getInfo()->pause = EXIT;
+      removeMatrix(&(getData()->tetramino_current), TETRAMINO_SIZE);
+      removeMatrix(&(getData()->field_simple), FIELD_HEIGHT);
+      removeMatrix(&(getInfo()->next), TETRAMINO_SIZE);
+      removeMatrix(&(getInfo()->field), FIELD_HEIGHT);
       break;
     case Left:
-      if (*getState() == MOVING) move_left();
+      if (*getState() == MOVING) moveLeft();
       break;
     case Right:
-      if (*getState() == MOVING) move_right();
+      if (*getState() == MOVING) moveRight();
       break;
     case Down:
-      if (*getState() == MOVING) move_down();
+      if (*getState() == MOVING) moveDown();
       break;
     case Up:
       break;
@@ -136,292 +188,13 @@ void userInput(UserAction_t action, bool hold) {
   }
 }
 
-void restartGame() {
-  for (int i = 0; i < FIELD_HEIGHT; i++) {
-    for (int j = 0; j < FIELD_WIDTH; j++) {
-      getData()->field_simple[i][j] = 0;
-      getInfo()->field[i][j] = 0;
-      if (i < TETRAMINO_SIZE && j < TETRAMINO_SIZE) {
-        getData()->tetramino_current[i][j] = 0;
-        getInfo()->next[i][j] = 0;
-      }
-    }
-  }
-  getInfo()->level = 0;
-  getInfo()->score = 0;
-  getInfo()->speed = 0;
-  getInfo()->pause = 0;
-}
-
-int create_matrix(int ***matrix, int str, int col) {
-  int err = 0;
-  *matrix = calloc(str, sizeof(int *));
-  if (*matrix) {
-    for (int i = 0; i < str && !err; i++) {
-      (*matrix)[i] = calloc(col, sizeof(int));
-      if (!(*matrix)[i]) {
-        err = 1;
-        i--;
-        while (i >= 0) {
-          free((*matrix)[i]);
-          (*matrix)[i] = NULL;
-          i--;
-        }
-        free((*matrix));
-        *matrix = NULL;
-      }
-    }
-  } else {
-    err = 1;
-  }
-  return err;
-}
-
-void remove_matrix(int ***matrix, int str) {
-  if (*matrix) {
-    for (int i = 0; i < str; i++) {
-      if ((*matrix)[i]) {
-        free((*matrix)[i]);
-        (*matrix)[i] = NULL;
-      }
-    }
-  }
-  if (*matrix) {
-    free(*matrix);
-    *matrix = NULL;
-  }
-}
-
-int spawn_next() {
-  int err = 0;
-  for (int i = 0; i < TETRAMINO_SIZE; i++) {
-    for (int j = 0; j < TETRAMINO_SIZE; j++) {
-      (getData()->tetramino_current)[i][j] = (getInfo()->next)[i][j];
-    }
-  }
-  getData()->x_coord = 3;
-  getData()->y_coord = -3;
-  if (check_collision(getData()->tetramino_current, -2, 3)) {
-    err = 1;
-    getInfo()->pause = -10;
-  } else {
-    getData()->current_type = getData()->next_type;
-    create_next(&(getInfo()->next));
-  }
-  return err;
-}
-
-int sum_matrix(int ***result_field) {
-  int result = 0;
-  int y_coord = getData()->y_coord;
-  int x_coord = getData()->x_coord;
-  for (int i = 0; i < FIELD_HEIGHT; i++) {
-    for (int j = 0; j < FIELD_WIDTH; j++) {
-      getInfo()->field[i][j] = getData()->field_simple[i][j];
-    }
-  }
-
-  for (int i = y_coord; i < y_coord + TETRAMINO_SIZE && !result; i++) {
-    for (int j = x_coord; j < x_coord + TETRAMINO_SIZE && !result; j++) {
-      if (i >= 0 && j >= 0 && i < FIELD_HEIGHT && j < FIELD_WIDTH) {
-        (*result_field)[i][j] =
-            getData()->tetramino_current[i - y_coord][j - x_coord] ||
-            getData()->field_simple[i][j];
-      }
-    }
-  }
-  return result;
-}
-
-void create_next(int ***tetramino) {
-  clear_matrix(tetramino, TETRAMINO_SIZE, TETRAMINO_SIZE);
-  srand(time(NULL));
-  static int prev_sign = -1;
-  int sign = 0;
-  do {
-    sign = rand() % 7;
-  } while (sign == prev_sign);
-  prev_sign = sign;
-  getData()->next_type = "IOTLJSZ"[sign];
-  switch ("IOTLJSZ"[sign]) {
-    case 'I':
-      for (int i = 0; i < 4; i++) (*tetramino)[2][i] = 1;
-      break;
-    case 'O':
-      (*tetramino)[1][1] = 1;
-      (*tetramino)[1][2] = 1;
-      (*tetramino)[2][1] = 1;
-      (*tetramino)[2][2] = 1;
-      break;
-    case 'T':
-      (*tetramino)[1][2] = 1;
-      for (int i = 1; i < 4; i++) (*tetramino)[2][i] = 1;
-      break;
-    case 'L':
-      (*tetramino)[1][3] = 1;
-      for (int i = 1; i < 4; i++) (*tetramino)[2][i] = 1;
-      break;
-    case 'J':
-      (*tetramino)[1][1] = 1;
-      for (int i = 1; i < 4; i++) (*tetramino)[2][i] = 1;
-      break;
-    case 'S':
-      (*tetramino)[1][2] = 1;
-      (*tetramino)[1][3] = 1;
-      (*tetramino)[2][1] = 1;
-      (*tetramino)[2][2] = 1;
-      break;
-    case 'Z':
-      (*tetramino)[1][1] = 1;
-      (*tetramino)[1][2] = 1;
-      (*tetramino)[2][2] = 1;
-      (*tetramino)[2][3] = 1;
-      break;
-    default:
-      break;
-  }
-}
-
-void clear_matrix(int ***matrix, int row, int col) {
-  for (int i = 0; i < row; i++) {
-    for (int j = 0; j < col; j++) {
-      (*matrix)[i][j] = 0;
-    }
-  }
-}
-
-void move_left() {
-  if (!check_collision(getData()->tetramino_current, getData()->y_coord,
-                       getData()->x_coord - 1)) {
-    getData()->x_coord--;
-    sum_matrix(&(getInfo()->field));
-  }
-}
-
-void move_right() {
-  if (!check_collision(getData()->tetramino_current, getData()->y_coord,
-                       getData()->x_coord + 1)) {
-    getData()->x_coord++;
-    sum_matrix(&(getInfo()->field));
-  }
-}
-
-void move_down() {
-  if (!check_collision(getData()->tetramino_current, getData()->y_coord + 1,
-                       getData()->x_coord)) {
-    getData()->y_coord++;
-    sum_matrix(&(getInfo()->field));
-    *getState() = MOVING;
-  } else {
-    *getState() = ATTACHING;
-  }
-}
-
-void rotate_left() {
-  if (!turn_tetramino('l', 0)) {
-    turn_tetramino('L', 0);
-  } else if (!turn_tetramino('l', 1)) {
-    move_right();
-    turn_tetramino('L', 0);
-  } else if (!turn_tetramino('l', -1)) {
-    move_left();
-    turn_tetramino('L', 0);
-  }
-}
-
-void rotate() {
-  if (getData()->current_type == 'T' || getData()->current_type == 'L' ||
-      getData()->current_type == 'J') {
-    rotate_left();
-  } else if ((getData()->current_type == 'S' &&
-              getData()->tetramino_current[1][3] == 1) ||
-             getData()->current_type == 'Z' &&
-                 getData()->tetramino_current[1][1] == 1) {
-    rotate_left();
-  } else if ((getData()->current_type == 'S' &&
-              getData()->tetramino_current[1][3] == 0) ||
-             (getData()->current_type == 'Z' &&
-              getData()->tetramino_current[1][1] == 0)) {
-    if (!turn_tetramino('r', 0)) {
-      turn_tetramino('R', 0);
-    } else if (!turn_tetramino('r', 1)) {
-      move_right();
-      turn_tetramino('R', 0);
-    } else if (!turn_tetramino('r', -1)) {
-      move_left();
-      turn_tetramino('R', 0);
-    }
-  } else if (getData()->current_type == 'I') {
-    if (getData()->tetramino_current[2][0] == 1) {
-      if (!turn_tetramino('r', 0)) turn_tetramino('R', 0);
-    } else {
-      if (!turn_tetramino('l', 0)) {
-        turn_tetramino('L', 0);
-      } else if (!turn_tetramino('l', 1)) {
-        move_right();
-        turn_tetramino('L', 0);
-      } else if (!turn_tetramino('l', 2)) {
-        move_right();
-        move_right();
-        turn_tetramino('L', 0);
-      } else if (!turn_tetramino('l', -1)) {
-        move_left();
-        turn_tetramino('L', 0);
-      }
-    }
-  }
-}
-
-int turn_tetramino(char direction, int x_pos) {
-  int cant_turn = 0;
-  int tmp_matrix[TETRAMINO_SIZE][TETRAMINO_SIZE];
-  for (int i = 0; i < TETRAMINO_SIZE; i++) {
-    for (int j = 0; j < TETRAMINO_SIZE; j++) {
-      if (direction == 'L' || direction == 'l') {
-        tmp_matrix[i][j] =
-            getData()->tetramino_current[TETRAMINO_SIZE - 1 - j][i];
-      } else if (direction == 'R' || direction == 'r') {
-        tmp_matrix[i][j] =
-            getData()->tetramino_current[j][TETRAMINO_SIZE - 1 - i];
-      }
-    }
-  }
-  for (int i = 0; i < TETRAMINO_SIZE && !cant_turn; i++) {
-    for (int j = 0; j < TETRAMINO_SIZE && !cant_turn; j++) {
-      if (direction == 'l' || direction == 'r') {
-        int y = getData()->y_coord + i;
-        int x = getData()->x_coord + j + x_pos;
-        if (y >= 0 && y < 20 && x >= 0 && x < 10) {
-          if (tmp_matrix[i][j] + getData()->field_simple[y][x] > 1) cant_turn++;
-        } else if (y > 19 || x < 0 || x > 9) {
-          if (tmp_matrix[i][j] > 0) cant_turn++;
-        }
-
-      } else if (direction == 'L' || direction == 'R') {
-        getData()->tetramino_current[i][j] = tmp_matrix[i][j];
-      }
-    }
-  }
-  sum_matrix(&(getInfo()->field));
-  return cant_turn;
-}
-
-int check_collision(int **tetramino, int y_coord, int x_coord) {
-  int lock = 0;
-  for (int i = 0; i < TETRAMINO_SIZE && !lock; i++) {
-    for (int j = 0; j < TETRAMINO_SIZE && !lock; j++) {
-      int y = y_coord + i;
-      int x = x_coord + j;
-      if (y >= 0 && y < 20 && x >= 0 && x < 10) {
-        if (tetramino[i][j] + getData()->field_simple[y][x] > 1) lock++;
-      } else if (y > 19 || x < 0 || x > 9) {
-        if (tetramino[i][j] > 0) lock++;
-      }
-    }
-  }
-  return lock;
-}
-
+/**
+ * @brief Manages the game timer.
+ *
+ * This function calculates the time elapsed since the last move and triggers a
+ * shift in the game state (i.e., moving the tetromino down) if the time exceeds
+ * the speed threshold based on the current level.
+ */
 void timer() {
   static struct timeval start = {0};
   if (start.tv_sec == 0) gettimeofday(&start, NULL);
@@ -436,37 +209,12 @@ void timer() {
   getInfo()->speed = 650 - 50 * getInfo()->level;
 }
 
-void check_fill() {
-  int full_lines_count = 0;
-  for (int i = 0; i < FIELD_HEIGHT; i++) {
-    int is_full = 1;
-    for (int j = 0; j < FIELD_WIDTH && is_full; j++) {
-      if (getData()->field_simple[i][j] == 0) is_full = 0;
-    }
-    if (is_full) {
-      delete_full_line(i);
-      full_lines_count++;
-    }
-  }
-  sum_matrix(&(getInfo()->field));
-  int score = 1;
-  while (full_lines_count--) score *= 2;
-  getInfo()->score += 100 * (score - 1);
-  getInfo()->level = getInfo()->score / 600 + 1;
-  if (getInfo()->level > 10) getInfo()->level = 10;
-}
-
-void delete_full_line(int y_index) {
-  for (int i = y_index; i > 0; i--) {
-    for (int j = 0; j < FIELD_WIDTH; j++) {
-      getData()->field_simple[i][j] = getData()->field_simple[i - 1][j];
-    }
-  }
-  for (int j = 0; j < FIELD_WIDTH; j++) {
-    getData()->field_simple[0][j] = 0;
-  }
-}
-
+/**
+ * @brief Saves the current game result.
+ *
+ * If the player's score exceeds the high score, it updates the high score file
+ * to store the new value.
+ */
 void saveResult() {
   if (getInfo()->score > getInfo()->high_score) {
     FILE *file = fopen("/usr/local/bin/brick_game_high_score.txt", "r");

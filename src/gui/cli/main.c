@@ -1,5 +1,16 @@
 #include "main.h"
 
+/**
+ * @brief Main function to start the game, handle user input and manage game
+ * state.
+ *
+ * Initializes ncurses environment, sets up key bindings, colors, and enters the
+ * game loop to process user inputs and update game state. The loop continues
+ * until the user terminates the game.
+ *
+ * @return int Returns 0 if the game ended normally, otherwise returns an error
+ * code.
+ */
 int main() {
   int err = -1;
 
@@ -48,17 +59,29 @@ int main() {
     }
     napms(5);
     refresh();
-    err = print_game(updateCurrentState());
+    err = printGame(updateCurrentState());
   }
   endwin();
   return err;
 }
 
-int print_game(GameInfo_t info) {
+/**
+ * @brief Prints the current game information on the screen.
+ *
+ * Displays game speed, level, score, and top score. Also updates the game field
+ * and shows the next piece preview. Depending on the current game state (pause,
+ * game over), relevant messages are shown.
+ *
+ * @param info Structure containing the current game state (speed, level, score,
+ * etc.).
+ * @return int Returns 0 if the game ended, otherwise returns 1 for continue
+ * playing.
+ */
+int printGame(GameInfo_t info) {
   int terminate = -1;
-  if (info.pause == -1) {
+  if (info.pause == MEM_ERROR) {
     terminate = 1;
-  } else if (info.pause == -2) {
+  } else if (info.pause == EXIT) {
     terminate = 0;
   } else {
     attron(COLOR_PAIR(2));
@@ -78,9 +101,9 @@ int print_game(GameInfo_t info) {
     mvprintw(18, 25, "TOP SCORE:");
     mvprintw(19, 25, "%d", info.high_score);
     attroff(COLOR_PAIR(2));
-    print_field(info.field);
-    print_next(info.next);
-    if (info.pause > 0) {
+    printField(info.field);
+    printNext(info.next);
+    if (info.pause == 1) {
       attron(COLOR_PAIR(2));
       mvprintw(10, 5, "<< PAUSE >>");
       mvprintw(11, 2, "Press p for resume");
@@ -88,7 +111,7 @@ int print_game(GameInfo_t info) {
       mvprintw(13, 4, "Enter for next");
       attroff(COLOR_PAIR(2));
     }
-    if (info.pause == -10) {
+    if (info.pause == GAME_OVER) {
       attron(COLOR_PAIR(2));
       mvprintw(10, 3, "<< GAME OVER >>");
       mvprintw(11, 1, "Press Enter for next");
@@ -97,7 +120,16 @@ int print_game(GameInfo_t info) {
   return terminate;
 }
 
-void print_field(int **field) {
+/**
+ * @brief Prints the game field on the screen.
+ *
+ * Loops through the field and prints each cell. Cells with a value greater than
+ * 0 are drawn in the active color, while others are printed with a default
+ * color.
+ *
+ * @param field A 2D array representing the game field.
+ */
+void printField(int **field) {
   if (field) {
     for (int i = 0; i < 20; i++) {
       move(i + 1, 1);
@@ -116,7 +148,14 @@ void print_field(int **field) {
   }
 }
 
-void print_next(int **next) {
+/**
+ * @brief Prints the next piece preview.
+ *
+ * Displays the next piece that will appear in the game using a 5x5 grid.
+ *
+ * @param next A 2D array representing the next piece.
+ */
+void printNext(int **next) {
   if (next) {
     for (int i = 0; i < 5; i++) {
       move(i + 2, 25);

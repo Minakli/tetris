@@ -1,3 +1,10 @@
+/**
+ * @file tetris.h
+ * @brief Header file for the Tetris game logic.
+ * 
+ * This file contains definitions, constants, and function prototypes
+ * required for the Tetris game implementation.
+ */
 #include <stdlib.h>
 #include <stdio.h>
 #include <time.h>
@@ -9,6 +16,10 @@
 #ifndef TETRIS_H_
 #define TETRIS_H_
 
+/** @defgroup GameStates Game States
+ *  @brief Constants representing various game states.
+ *  @{
+ */
 #define START 0
 #define SPAWN 1
 #define MOVING 2
@@ -17,10 +28,25 @@
 #define PAUSE 5
 #define GAME_OVER 6
 
+/** @defgroup ErrorCodes Error Codes
+ *  @brief Constants for error codes.
+ *  @{
+ */
+#define MEM_ERROR -1
+#define EXIT -2
+
+/** @defgroup GameDimensions Game Dimensions
+ *  @brief Constants for field dimensions and tetramino size.
+ *  @{
+ */
 #define FIELD_WIDTH 10
 #define FIELD_HEIGHT 20
 #define TETRAMINO_SIZE 5
 
+/**
+ * @struct Field_data
+ * @brief Structure representing the game field and tetramino state.
+ */
 typedef struct
 {
     int **field_simple;
@@ -35,21 +61,21 @@ GameInfo_t* getInfo();
 Field_data *getData();
 int spawn_next();
 int* getState();
-void create_next(int ***tetramino);
-int create_matrix(int ***matrix, int str, int col);
-void clear_matrix(int ***matrix, int row, int col);
-int check_collision(int **tetramino, int y_coord, int x_coord);
-void remove_matrix(int ***matrix, int str);
-int sum_matrix(int ***result_field);
-void move_left();
-void move_right();
-void move_down();
+void createNext(int ***tetramino);
+int createMatrix(int ***matrix, int str, int col);
+void clearMatrix(int ***matrix, int row, int col);
+int checkCollision(int **tetramino, int y_coord, int x_coord);
+void removeMatrix(int ***matrix, int str);
+int sumMatrix(int ***result_field);
+void moveLeft();
+void moveRight();
+void moveDown();
 void rotate();
-void rotate_left();
+void rotateLeft();
 void timer();
-int turn_tetramino(char direction, int x_pos);
-void check_fill();
-void delete_full_line(int y_index);
+int turnTetramino(char direction, int x_pos);
+void checkFill();
+void deleteFullLine(int y_index);
 void restartGame();
 void saveResult();
 

@@ -35,7 +35,7 @@ build/brick_game/tetris/%.o: src/brick_game/tetris/%.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
 # test
-test: build/tests/test_runner
+test: clean build/tests/test_runner
 	valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./build/tests/test_runner
 
 
@@ -46,7 +46,7 @@ build/tests/%.o: src/tests/%.c
 	mkdir -p build/tests/
 	$(CC) $(CFLAGS) -c $< -o $@
 
-gcov_report: build/tests/test_runner_gcov
+gcov_report: clean build/tests/test_runner_gcov
 	build/tests/test_runner_gcov
 	mkdir -p src/gcov
 	geninfo build/brick_game/tetris -o src/gcov/coverage.info

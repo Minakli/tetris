@@ -63,6 +63,7 @@
     "brick_game.h": "c",
     "stdbool.h": "c",
     "unistd.h": "c",
-    "main.h": "c"
+    "main.h": "c",
+    "test.h": "c"
   }
 }

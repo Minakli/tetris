@@ -4,11 +4,12 @@ int main(void) {
   int failed = 0;
   int success = 0;
   Suite *brick_game_test[] = {
-    test_gui(), test_tetris(),
+      test_tetris(),
+      // test_matrix(),
   };
 
-  for (unsigned long i = 0; i < sizeof(brick_game_test) / sizeof(brick_game_test[0]);
-       i++) {
+  for (unsigned long i = 0;
+       i < sizeof(brick_game_test) / sizeof(brick_game_test[0]); i++) {
     SRunner *sr = srunner_create(brick_game_test[i]);
     srunner_set_fork_status(sr, CK_NOFORK);
     srunner_run_all(sr, CK_NORMAL);

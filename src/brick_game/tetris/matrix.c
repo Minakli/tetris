@@ -164,10 +164,8 @@ void createNext(int ***tetramino) {
       for (int i = 0; i < 4; i++) (*tetramino)[2][i] = 1;
       break;
     case 'O':
-      (*tetramino)[1][1] = 1;
-      (*tetramino)[1][2] = 1;
-      (*tetramino)[2][1] = 1;
-      (*tetramino)[2][2] = 1;
+      for (int i = 1; i < 3; i++) (*tetramino)[1][i] = 1;
+      for (int i = 1; i < 3; i++) (*tetramino)[2][i] = 1;
       break;
     case 'T':
       (*tetramino)[1][2] = 1;
@@ -182,16 +180,12 @@ void createNext(int ***tetramino) {
       for (int i = 1; i < 4; i++) (*tetramino)[2][i] = 1;
       break;
     case 'S':
-      (*tetramino)[1][2] = 1;
-      (*tetramino)[1][3] = 1;
-      (*tetramino)[2][1] = 1;
-      (*tetramino)[2][2] = 1;
+      for (int i = 2; i < 4; i++) (*tetramino)[1][i] = 1;
+      for (int i = 1; i < 3; i++) (*tetramino)[2][i] = 1;
       break;
     case 'Z':
-      (*tetramino)[1][1] = 1;
-      (*tetramino)[1][2] = 1;
-      (*tetramino)[2][2] = 1;
-      (*tetramino)[2][3] = 1;
+      for (int i = 1; i < 3; i++) (*tetramino)[1][i] = 1;
+      for (int i = 2; i < 4; i++) (*tetramino)[2][i] = 1;
       break;
     default:
       break;

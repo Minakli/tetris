@@ -5,7 +5,6 @@ int main(void) {
   int success = 0;
   Suite *brick_game_test[] = {
       test_tetris(),
-      // test_matrix(),
   };
 
   for (unsigned long i = 0;

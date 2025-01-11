@@ -381,10 +381,12 @@ int checkCollision(int **tetramino, int y_coord, int x_coord) {
     for (int j = 0; j < TETRAMINO_SIZE && !lock; j++) {
       int y = y_coord + i;
       int x = x_coord + j;
+
       if (y >= 0 && y < 20 && x >= 0 && x < 10) {
-        if (tetramino[i][j] + getData()->field_simple[y][x] > 1) lock++;
+        lock = tetramino[i][j] + getData()->field_simple[y][x] > 1 ? lock + 1
+                                                                   : lock;
       } else if (y > 19 || x < 0 || x > 9) {
-        if (tetramino[i][j] > 0) lock++;
+        lock = tetramino[i][j] > 0 ? lock + 1 : lock;
       }
     }
   }

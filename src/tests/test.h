@@ -11,6 +11,4 @@
 
 Suite *test_tetris(void);
 
-Suite *test_matrix(void);
-
 #endif
